@@ -5,5 +5,5 @@ evaluate==0.4.0
 numpy==1.24.3
 peft==0.3.0
 py7zr==0.20.5
-streamlit==1.17.0
+streamlit==1.19.0
 transformers==4.27.2
