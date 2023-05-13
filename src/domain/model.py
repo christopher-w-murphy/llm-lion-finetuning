@@ -89,4 +89,4 @@ def summarize_trainable_parameters(model: PeftModel) -> str:
         all_param += num_params
         if param.requires_grad:
             trainable_params += num_params
-    return f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
+    return f"trainable params: {trainable_params}, all params: {all_param}, trainable: {100 * trainable_params / all_param:.2f}%"
