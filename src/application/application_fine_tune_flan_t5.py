@@ -24,7 +24,7 @@ def app_fine_tune(model_size: str):
     data_collator = get_data_collator(tokenizer, model)
 
     # Create Trainer instance.
-    trainer = get_trainer(model, data_collator, train_dataset)
+    trainer = get_trainer(model, data_collator, train_dataset, model_size)
     model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
 
     # Train model.

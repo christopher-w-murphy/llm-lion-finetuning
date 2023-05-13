@@ -59,8 +59,13 @@ def get_training_arguments(model_size: str) -> Seq2SeqTrainingArguments:
     )
 
 
-def get_trainer(model: PeftModel, data_collator: DataCollatorForSeq2Seq, train_dataset: Dataset) -> Seq2SeqTrainer:
-    training_args = get_training_arguments()
+def get_trainer(
+        model: PeftModel,
+        data_collator: DataCollatorForSeq2Seq,
+        train_dataset: Dataset,
+        model_size: str
+) -> Seq2SeqTrainer:
+    training_args = get_training_arguments(model_size)
     return Seq2SeqTrainer(
         model=model,
         args=training_args,
