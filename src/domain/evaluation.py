@@ -1,16 +1,10 @@
-from random import randrange
 from typing import Optional, Dict, Any, Tuple
 
-from datasets import Dataset
 from numpy import where
 from peft import PeftModel
 from transformers import PreTrainedTokenizer
 
 from src.domain.configuration import label_pad_token_id
-
-
-def sample_test_dataset(test_dataset: Dataset) -> Dict[str, Any]:
-    return test_dataset[randrange(len(test_dataset))]
 
 
 def evaluate_peft_model(
