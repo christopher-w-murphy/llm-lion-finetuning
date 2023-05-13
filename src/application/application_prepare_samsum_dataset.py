@@ -15,6 +15,9 @@ def app_prepare_dataset(model_size: str):
     # Load the `samsum` dataset.
     dataset = load_samsum_dataset()
 
+    dataset['train'] = dataset['train'].select(range(10))
+    dataset['test'] = dataset['test'].select(range(10))
+
     write(f"Train dataset size: {len(dataset['train'])}")
     write(f"Test dataset size: {len(dataset['test'])}")
 
