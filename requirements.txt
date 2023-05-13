@@ -8,3 +8,4 @@ py7zr==0.20.5
 transformers==4.27.2
 streamlit==1.19.0
 altair<5
+tensorboardX==2.6

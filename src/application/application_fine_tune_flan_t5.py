@@ -8,7 +8,7 @@ from src.domain.model import get_lora_model, get_data_collator, get_trainer
 
 def app_fine_tune(model_size: str):
     # Load the needed results from step 1.
-    train_dataset = load_tokenized_train_dataset()  # tokenized_dataset["train"]
+    train_dataset = load_tokenized_train_dataset()
     tokenizer_id = get_tokenizer_id(model_size)
     tokenizer = load_tokenizer(tokenizer_id)
 
