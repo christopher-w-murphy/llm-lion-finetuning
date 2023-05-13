@@ -55,7 +55,7 @@ def get_training_arguments(model_size: str) -> Seq2SeqTrainingArguments:
         logging_strategy="steps",
         logging_steps=500,
         save_strategy="no",
-        report_to="tensorboard",
+        report_to="none",
     )
 
 
