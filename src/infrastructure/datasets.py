@@ -6,7 +6,7 @@ eval_datapath = "data/eval"
 
 
 def load_samsum_dataset() -> DatasetDict:
-    return load_dataset("samsum")
+    return load_dataset("samsum", download_mode="force_redownload")
 
 
 def load_tokenized_train_dataset() -> Dataset:
