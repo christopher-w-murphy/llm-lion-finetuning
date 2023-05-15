@@ -14,9 +14,7 @@ def main():
     with form("Configuration"):
         selectbox("Select FLAN-T5 model size.", ["Small", "XXL"], key="model_size", help="Fine-tune a 80M param model, or fine-tune a 11B param model.")
         slider("Number of Training Epochs", min_value=1, max_value=10, value=5, key="n_epochs", help="Adjust the number of fine-tuning training epochs.")
-        limit_samples = checkbox("Limit Number of Samples?", key="limit_samples", help="Whether to use all the samples in the datasets.")
-        if limit_samples:
-            slider("Number of Samples", min_value=1, max_value=100, value=10, key="n_samples", help="Select only the first n samples from the train and test datasets.")
+        checkbox("Limit Number of Samples?", key="limit_samples", help="If selected, use only the first 10 samples from the train and test datasets. Useful for testing the pipeline.")
         run = form_submit_button("Submit Run")
 
     if run:

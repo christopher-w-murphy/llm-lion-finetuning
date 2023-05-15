@@ -18,9 +18,9 @@ def app_prepare_dataset(config: Dict[str, Any]):
     # Load the `samsum` dataset.
     dataset = load_samsum_dataset()
 
-    if config['limit_samples'] and 'n_samples' in config and config['n_samples']:
-        dataset['train'] = dataset['train'].select(range(config['n_samples']))
-        dataset['test'] = dataset['test'].select(range(config['n_samples']))
+    if config['limit_samples']:
+        dataset['train'] = dataset['train'].select(range(10))
+        dataset['test'] = dataset['test'].select(range(10))
 
     config['train_dataset_size'] = len(dataset['train'])
     config['test_dataset_size'] = len(dataset['test'])
