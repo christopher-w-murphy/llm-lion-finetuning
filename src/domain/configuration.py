@@ -28,15 +28,6 @@ def get_output_dir(model_size: str) -> str:
         raise ValueError('Invalid model size.')
 
 
-def get_n_epochs(model_size: str) -> int:
-    if model_size.lower() == 'small':
-        return 1
-    elif model_size.lower() == 'xxl':
-        return 5
-    else:
-        raise ValueError('Invalid model size.')
-
-
 def get_peft_model_id(model_size: str) -> str:
     if model_size.lower() == 'small':
         return "results-small"

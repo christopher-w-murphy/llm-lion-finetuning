@@ -1,4 +1,7 @@
-from streamlit import write, progress
+from time import time
+from typing import Dict, Any
+
+from streamlit import progress
 
 from src.infrastructure.datasets import load_tokenized_eval_dataset
 from src.infrastructure.peft import load_configuration, load_peft_model
@@ -8,28 +11,24 @@ from src.domain.configuration import get_peft_model_id
 from src.domain.evaluation import evaluate_peft_model
 
 
-def app_evaluate_lora_model(model_size: str):
+def app_evaluate_lora_model(config: Dict[str, Any]):
+    config['step3_start'] = time()
+
     # Load peft config for pre-trained checkpoint.
-    peft_model_id = get_peft_model_id(model_size)
-    config = load_configuration(peft_model_id)
-    write('Configuration loaded')
+    peft_model_id = get_peft_model_id(config['model_size'])
+    model_config = load_configuration(peft_model_id)
 
     # Load base LLM model and tokenizer.
-    model = load_model_from_config(config)
-    write('Base model loaded')
-    tokenizer = load_tokenizer_from_config(config)
-    write('Tokenizer loaded')
+    model = load_model_from_config(model_config)
+    tokenizer = load_tokenizer_from_config(model_config)
 
     # Load the LoRA model.
     model = load_peft_model(model, peft_model_id)
     model.eval()
-    write("Peft model loaded")
 
     # Evaluate the tokenized test dataset using rouge_score.
     metric = load_rouge_metric()
-    write('Rouge metric loaded')
     test_dataset = load_tokenized_eval_dataset()
-    write('Evaluation dataset loaded')
 
     predictions, references = [], []
     eval_progress = progress(0., text="Running Predictions")
@@ -42,7 +41,10 @@ def app_evaluate_lora_model(model_size: str):
 
     rogue = metric.compute(predictions=predictions, references=references, use_stemmer=True)
 
-    write(f"Rogue1: {rogue['rouge1'] * 100:2f}%")
-    write(f"rouge2: {rogue['rouge2'] * 100:2f}%")
-    write(f"rougeL: {rogue['rougeL'] * 100:2f}%")
-    write(f"rougeLsum: {rogue['rougeLsum'] * 100:2f}%")
+    config['rouge1'] = rogue['rouge1']
+    config['rouge2'] = rogue['rouge2']
+    config['rougeL'] = rogue['rougeL']
+    config['rougeLsum'] = rogue['rougeLsum']
+
+    config['step3_end'] = time()
+    config['step3_time_diff'] = config['step3_end'] - config['step3_start']

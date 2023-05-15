@@ -1,4 +1,5 @@
-from streamlit import write
+from time import time
+from typing import Dict, Any
 
 from src.infrastructure.datasets import load_samsum_dataset, train_datapath, eval_datapath
 from src.infrastructure.transformers import load_tokenizer
@@ -11,18 +12,21 @@ from src.domain.transform import (
 )
 
 
-def app_prepare_dataset(model_size: str):
+def app_prepare_dataset(config: Dict[str, Any]):
+    config['step1_start'] = time()
+
     # Load the `samsum` dataset.
     dataset = load_samsum_dataset()
 
-    dataset['train'] = dataset['train'].select(range(10))
-    dataset['test'] = dataset['test'].select(range(10))
+    if config['limit_samples'] and 'n_samples' in config and config['n_samples']:
+        dataset['train'] = dataset['train'].select(range(config['n_samples']))
+        dataset['test'] = dataset['test'].select(range(config['n_samples']))
 
-    write(f"Train dataset size: {len(dataset['train'])}")
-    write(f"Test dataset size: {len(dataset['test'])}")
+    config['train_dataset_size'] = len(dataset['train'])
+    config['test_dataset_size'] = len(dataset['test'])
 
     # We need to convert our inputs (text) to token IDs.
-    tokenizer_id = get_tokenizer_id(model_size)
+    tokenizer_id = get_tokenizer_id(config['model_size'])
     tokenizer = load_tokenizer(tokenizer_id)
 
     # Batch our data efficiently.
@@ -30,11 +34,11 @@ def app_prepare_dataset(model_size: str):
 
     tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, "dialogue")
     max_source_length = max_sequence_length(tokenized_inputs)
-    write(f"Max source length: {max_source_length}")
+    config['max_source_length'] = max_source_length
 
     tokenized_targets = tokenize_strings(concatenated_dataset, tokenizer, "summary")
     max_target_length = max_sequence_length(tokenized_targets, 90)
-    write(f"Max target length: {max_target_length}")
+    config['max_target_length'] = max_target_length
 
     # Preprocess our dataset before training and save it to disk.
     tokenized_dataset = dataset.map(
@@ -44,3 +48,6 @@ def app_prepare_dataset(model_size: str):
     )
     tokenized_dataset["train"].save_to_disk(train_datapath)
     tokenized_dataset["test"].save_to_disk(eval_datapath)
+
+    config['step1_end'] = time()
+    config['step1_time_diff'] = config['step1_end'] - config['step1_start']
