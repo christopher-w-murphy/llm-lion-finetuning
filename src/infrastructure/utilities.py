@@ -1,12 +1,7 @@
 from io import BytesIO, StringIO
 from json import dump
-from os import getenv
-from typing import Dict, Any, Union
 
-from streamlit.runtime.state import SessionStateProxy
-
-
-ConfigType = Union[SessionStateProxy, Dict[str, Any]]
+from src.infrastructure.streamlit import ConfigType
 
 
 def convert_session_state_to_bytes(config: ConfigType) -> BytesIO:

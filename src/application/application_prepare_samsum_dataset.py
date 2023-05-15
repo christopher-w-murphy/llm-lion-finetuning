@@ -2,7 +2,7 @@ from time import time
 
 from huggingface_hub import HfApi
 
-from src.infrastructure.utilities import ConfigType
+from src.infrastructure.streamlit import ConfigType
 from src.infrastructure.datasets import load_samsum_dataset, train_datapath, eval_datapath
 from src.infrastructure.transformers import load_tokenizer
 from src.domain.configuration import get_tokenizer_id, limited_samples_count

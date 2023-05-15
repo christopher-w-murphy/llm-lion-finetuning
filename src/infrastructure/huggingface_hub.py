@@ -4,10 +4,12 @@ from os import getenv
 from huggingface_hub import HfApi
 
 from src.infrastructure.utilities import convert_session_state_to_bytes, ConfigType, strtobool
+from src.infrastructure.streamlit import get_secret
 
 
 def get_huggingface_hub_connection() -> HfApi:
-    return HfApi(token=getenv('HUGGINGFACE_TOKEN'))
+    token = get_secret('HUGGINGFACE_TOKEN')
+    return HfApi(token=token)
 
 
 def format_filename(config: ConfigType, step: int) -> str:

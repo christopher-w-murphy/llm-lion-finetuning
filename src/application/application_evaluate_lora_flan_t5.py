@@ -3,7 +3,7 @@ from time import time
 from huggingface_hub import HfApi
 from streamlit import progress
 
-from src.infrastructure.utilities import ConfigType
+from src.infrastructure.streamlit import ConfigType
 from src.infrastructure.datasets import load_tokenized_eval_dataset
 from src.infrastructure.peft import load_configuration, load_peft_model
 from src.infrastructure.transformers import load_model_from_config, load_tokenizer_from_config
