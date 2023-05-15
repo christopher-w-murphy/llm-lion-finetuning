@@ -13,7 +13,7 @@ from src.infrastructure.huggingface_hub import upload_results_file
 def app_fine_tune(config: ConfigType, api: HfApi):
     step = 2
     config['steps'][step] = dict()
-    config['steps'][step]['start_time'] = time()
+    config['steps'][step]['start_epoch'] = time()
 
     # Load the needed results from step 1.
     train_dataset = load_tokenized_train_dataset()
