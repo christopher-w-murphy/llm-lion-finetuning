@@ -1,4 +1,5 @@
 label_pad_token_id: int = -100
+limited_samples_count: int = 2
 
 
 def get_base_model_id(model_size: str) -> str:

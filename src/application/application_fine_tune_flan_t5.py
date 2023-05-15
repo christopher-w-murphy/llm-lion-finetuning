@@ -1,14 +1,19 @@
 from time import time
-from typing import Dict, Any
 
+from huggingface_hub import HfApi
+
+from src.infrastructure.utilities import ConfigType
 from src.infrastructure.transformers import load_base_model, load_tokenizer
 from src.infrastructure.datasets import load_tokenized_train_dataset
 from src.domain.configuration import get_tokenizer_id, get_base_model_id, get_peft_model_id
 from src.domain.model import get_lora_model, get_data_collator, get_trainer, summarize_trainable_parameters
+from src.infrastructure.huggingface_hub import upload_results_file
 
 
-def app_fine_tune(config: Dict[str, Any]):
-    config['step2_start'] = time()
+def app_fine_tune(config: ConfigType, api: HfApi):
+    step = 2
+    config['steps'][step] = dict()
+    config['steps'][step]['start_time'] = time()
 
     # Load the needed results from step 1.
     train_dataset = load_tokenized_train_dataset()
@@ -21,7 +26,7 @@ def app_fine_tune(config: Dict[str, Any]):
 
     # Prepare our model for the LoRA int-8 training using peft.
     model = get_lora_model(model)
-    config['trainable_parameters'] = summarize_trainable_parameters(model)
+    config['steps'][step]['trainable_parameters'] = summarize_trainable_parameters(model)
 
     # Pad our inputs and labels.
     data_collator = get_data_collator(tokenizer, model)
@@ -38,5 +43,6 @@ def app_fine_tune(config: Dict[str, Any]):
     trainer.model.save_pretrained(peft_model_id)
     tokenizer.save_pretrained(peft_model_id)
 
-    config['step2_end'] = time()
-    config['step2_time_diff'] = config['step2_end'] - config['step2_start']
+    config['steps'][step]['elasped_time'] = time() - config['steps'][step]['start_epoch']
+    # preserve results
+    upload_results_file(config, api, step)

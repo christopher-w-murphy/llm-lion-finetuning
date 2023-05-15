@@ -1,14 +1,32 @@
+from datetime import datetime
+from os import getenv
+
 from huggingface_hub import HfApi
+
+from src.infrastructure.utilities import convert_session_state_to_bytes, ConfigType, strtobool
 
 
 def get_huggingface_hub_connection() -> HfApi:
-    return HfApi()
+    return HfApi(token=getenv('HUGGINGFACE_TOKEN'))
 
 
-def upload_results_file(api: HfApi):
-    api.upload_file(
-        path_or_fileobj="/path/to/local/folder/README.md",
-        path_in_repo="README.md",
-        repo_id="username/test-dataset",
-        repo_type="dataset",
-    )
+def format_filename(config: ConfigType, step: int) -> str:
+    start_epoch = config['steps'][step]['start_epoch']
+    start_time = datetime.fromtimestamp(start_epoch).strftime('%Y-%m-%d_%H:%M:%S')
+    return f"results_{start_time}_step{step}.json"
+
+
+def mock_saving() -> bool:
+    return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
+
+
+def upload_results_file(config: ConfigType, api: HfApi, step: int):
+    if not mock_saving():
+        config_bytes = convert_session_state_to_bytes(config)
+        filename = format_filename(config, step)
+        api.upload_file(
+            path_or_fileobj=config_bytes,
+            path_in_repo=filename,
+            repo_id="chriswmurphy/llm-lion-finetuning",
+            repo_type="dataset"
+        )

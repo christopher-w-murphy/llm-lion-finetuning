@@ -1,18 +1,22 @@
 from time import time
-from typing import Dict, Any
 
+from huggingface_hub import HfApi
 from streamlit import progress
 
+from src.infrastructure.utilities import ConfigType
 from src.infrastructure.datasets import load_tokenized_eval_dataset
 from src.infrastructure.peft import load_configuration, load_peft_model
 from src.infrastructure.transformers import load_model_from_config, load_tokenizer_from_config
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.configuration import get_peft_model_id
 from src.domain.evaluation import evaluate_peft_model
+from src.infrastructure.huggingface_hub import upload_results_file
 
 
-def app_evaluate_lora_model(config: Dict[str, Any]):
-    config['step3_start'] = time()
+def app_evaluate_lora_model(config: ConfigType, api: HfApi):
+    step = 3
+    config['steps'][step] = dict()
+    config['steps'][step]['start_epoch'] = time()
 
     # Load peft config for pre-trained checkpoint.
     peft_model_id = get_peft_model_id(config['model_size'])
@@ -41,10 +45,11 @@ def app_evaluate_lora_model(config: Dict[str, Any]):
 
     rogue = metric.compute(predictions=predictions, references=references, use_stemmer=True)
 
-    config['rouge1'] = rogue['rouge1']
-    config['rouge2'] = rogue['rouge2']
-    config['rougeL'] = rogue['rougeL']
-    config['rougeLsum'] = rogue['rougeLsum']
+    config['steps'][step]['rouge1'] = rogue['rouge1']
+    config['steps'][step]['rouge2'] = rogue['rouge2']
+    config['steps'][step]['rougeL'] = rogue['rougeL']
+    config['steps'][step]['rougeLsum'] = rogue['rougeLsum']
 
-    config['step3_end'] = time()
-    config['step3_time_diff'] = config['step3_end'] - config['step3_start']
+    config['steps'][step]['time_diff'] = time() - config['steps'][step]['start_epoch']
+    # preserve results
+    upload_results_file(config, api, step)
