@@ -7,7 +7,7 @@ from streamlit import (
     form_submit_button,
     header,
     session_state,
-
+    success
 )
 
 from src.infrastructure.huggingface_hub import get_huggingface_hub_connection
@@ -57,6 +57,8 @@ def main():
 
         header("Step 3. Evaluate & run Inference with LoRA FLAN-T5")
         app_evaluate_lora_model(session_state, api)
+
+        success('Training and Evaluation complete!')
 
 
 if __name__ == '__main__':
