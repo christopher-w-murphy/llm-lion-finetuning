@@ -36,10 +36,8 @@ def app_fine_tune(config: ConfigType, api: HfApi):
     trainer = get_trainer(model, data_collator, train_dataset, config)
     model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
 
-    write(trainer.model)
     write(trainer.model._get_name())
-    write(trainer.optimizer.__getattribute__('lr'))
-    write(trainer.optimizer.__getattribute__('betas'))
+    write(trainer.model)
     write(trainer.optimizer)
 
     # Train model.
