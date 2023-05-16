@@ -20,11 +20,11 @@ def main():
     """
     A simple Streamlit app to train and evaluate the models.
     """
-    title("Fine-Tune an LLM with Lion.")
+    title("Fine-Tune an LLM with Lion")
 
     with form("Configuration"):
         selectbox(
-            "Select Optimizer.",
+            "Select Optimizer",
             ["AdamW", "Lion"],
             key="optim_name",
             help="AdamW is the default optimzer for training transformer models. "
