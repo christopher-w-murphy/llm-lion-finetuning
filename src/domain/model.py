@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict
 
 from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, get_peft_model, PeftModel
@@ -11,6 +11,8 @@ from transformers import (
 )
 
 from src.domain.configuration import label_pad_token_id, get_output_dir
+from src.domain.optimization import get_optimizer
+from src.infrastructure.streamlit import ConfigType
 
 
 def get_lora_config():
@@ -41,7 +43,7 @@ def get_data_collator(tokenizer: PreTrainedTokenizer, model: PeftModel) -> DataC
     )
 
 
-def get_training_arguments(config: Dict[str, Any]) -> Seq2SeqTrainingArguments:
+def get_training_arguments(config: ConfigType) -> Seq2SeqTrainingArguments:
     """
     Define hyperparameters
     """
@@ -50,7 +52,6 @@ def get_training_arguments(config: Dict[str, Any]) -> Seq2SeqTrainingArguments:
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
         auto_find_batch_size=True,
-        learning_rate=1e-3,  # higher learning rate
         num_train_epochs=config['n_epochs'],
         logging_dir=logging_dir,
         logging_strategy="steps",
@@ -63,29 +64,28 @@ def get_trainer(
         model: PeftModel,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
-        config: Dict[str, Any]
+        config: ConfigType
 ) -> Seq2SeqTrainer:
-    training_args = get_training_arguments(config)
+    optimizer = get_optimizer(model, config['optim_name'])
     return Seq2SeqTrainer(
         model=model,
-        args=training_args,
+        args=get_training_arguments(config),
         data_collator=data_collator,
         train_dataset=train_dataset,
+        optimizers=(optimizer, None)
     )
 
 
 def summarize_trainable_parameters(model: PeftModel) -> Dict[str, int]:
     """
-    Prints the number of trainable parameters in the model.
+    Counts the number of trainable parameters in the model.
     """
     trainable_params = 0
     all_params = 0
     for _, param in model.named_parameters():
         num_params = param.numel()
-        # if using DS Zero 3 and the weights are initialized empty
         if num_params == 0 and hasattr(param, "ds_numel"):
             num_params = param.ds_numel
-
         all_params += num_params
         if param.requires_grad:
             trainable_params += num_params

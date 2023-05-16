@@ -24,10 +24,17 @@ def main():
 
     with form("Configuration"):
         selectbox(
-            "Select FLAN-T5 model size.",
+            "Select Optimizer.",
+            ["AdamW", "Lion"],
+            key="optim_name",
+            help="AdamW is the default optimzer for training transformer models. "
+                 "Lion is the optimizer we wish to test."
+        ),
+        selectbox(
+            "Select FLAN-T5 model size",
             ["Small", "XXL"],
             key="model_size",
-            help="Fine-tune a 80M param model, or fine-tune a 11B param model."
+            help="Fine-tune an 80M param model, or fine-tune an 11B param model."
         )
         slider(
             "Number of Training Epochs",
