@@ -29,7 +29,7 @@ def main():
             key="optim_name",
             help="AdamW is the default optimzer for training transformer models. "
                  "Lion is the optimizer we wish to test."
-        ),
+        )
         selectbox(
             "Select FLAN-T5 model size",
             ["Small", "XXL"],
