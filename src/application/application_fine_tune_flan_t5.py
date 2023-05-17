@@ -1,7 +1,6 @@
 from time import time
 
 from huggingface_hub import HfApi
-from streamlit import write
 
 from src.infrastructure.streamlit import ConfigType
 from src.infrastructure.transformers import load_base_model, load_tokenizer
@@ -33,12 +32,15 @@ def app_fine_tune(config: ConfigType, api: HfApi):
     data_collator = get_data_collator(tokenizer, model)
 
     # Create Trainer instance.
-    trainer = get_trainer(model, data_collator, train_dataset, config)
+    trainer = get_trainer(
+        model,
+        data_collator,
+        train_dataset,
+        config['model_size'],
+        config['n_epochs'],
+        config['optim_name']
+    )
     model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
-
-    write(trainer.model._get_name())
-    write(trainer.model)
-    write(trainer.optimizer)
 
     # Train model.
     trainer.train()
