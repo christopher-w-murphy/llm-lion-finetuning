@@ -24,8 +24,8 @@ def app_prepare_dataset(config: ConfigType, api: HfApi):
     dataset = load_samsum_dataset()
 
     if config['limit_samples']:
-        dataset['train'] = dataset['train'].select(range(limited_samples_count))
-        dataset['test'] = dataset['test'].select(range(limited_samples_count))
+        for dataset_name in dataset:
+            dataset[dataset_name] = dataset[dataset_name].select(range(limited_samples_count))
 
     config['steps'][step]['train_dataset_size'] = len(dataset['train'])
     config['steps'][step]['test_dataset_size'] = len(dataset['test'])
