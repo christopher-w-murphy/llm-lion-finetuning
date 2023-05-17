@@ -1,7 +1,7 @@
 from typing import Dict
 
 from datasets import Dataset
-from peft import LoraConfig, TaskType, prepare_model_for_int8_training, get_peft_model, PeftModel
+from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
 from transformers import (
     PreTrainedModel,
     DataCollatorForSeq2Seq,
@@ -11,11 +11,10 @@ from transformers import (
 )
 
 from src.domain.configuration import label_pad_token_id, get_output_dir
-from src.domain.optimization import get_optimizer
-from src.infrastructure.streamlit import ConfigType
+from src.domain.optimization import get_optimizers
 
 
-def get_lora_config():
+def get_lora_config() -> LoraConfig:
     return LoraConfig(
         r=16,
         lora_alpha=32,
@@ -26,15 +25,18 @@ def get_lora_config():
     )
 
 
-def get_lora_model(base_model: PreTrainedModel) -> PeftModel:
+def get_lora_model(base_model: PreTrainedModel) -> PeftModelForSeq2SeqLM:
     lora_config = get_lora_config()
     # prepare int-8 model for training
     model = prepare_model_for_int8_training(base_model)
     # add LoRA adaptor
-    return get_peft_model(model, lora_config)
+    return PeftModelForSeq2SeqLM(model, lora_config)
 
 
-def get_data_collator(tokenizer: PreTrainedTokenizer, model: PeftModel) -> DataCollatorForSeq2Seq:
+def get_data_collator(
+        tokenizer: PreTrainedTokenizer,
+        model: PeftModelForSeq2SeqLM
+) -> DataCollatorForSeq2Seq:
     return DataCollatorForSeq2Seq(
         tokenizer,
         model=model,
@@ -43,16 +45,16 @@ def get_data_collator(tokenizer: PreTrainedTokenizer, model: PeftModel) -> DataC
     )
 
 
-def get_training_arguments(config: ConfigType) -> Seq2SeqTrainingArguments:
+def get_training_arguments(model_size: str, n_epochs: int) -> Seq2SeqTrainingArguments:
     """
     Define hyperparameters
     """
-    output_dir = get_output_dir(config['model_size'])
+    output_dir = get_output_dir(model_size)
     logging_dir = f"{output_dir}/logs"
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
         auto_find_batch_size=True,
-        num_train_epochs=config['n_epochs'],
+        num_train_epochs=n_epochs,
         logging_dir=logging_dir,
         logging_strategy="steps",
         logging_steps=500,
@@ -61,22 +63,23 @@ def get_training_arguments(config: ConfigType) -> Seq2SeqTrainingArguments:
 
 
 def get_trainer(
-        model: PeftModel,
+        model: PeftModelForSeq2SeqLM,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
-        config: ConfigType
+        model_size: str,
+        n_epochs: int,
+        optim_name: str
 ) -> Seq2SeqTrainer:
-    optimizer = get_optimizer(model, config['optim_name'])
     return Seq2SeqTrainer(
         model=model,
-        args=get_training_arguments(config),
+        args=get_training_arguments(model_size, n_epochs),
         data_collator=data_collator,
         train_dataset=train_dataset,
-        optimizers=(optimizer, None)
+        optimizers=get_optimizers(model, optim_name)
     )
 
 
-def summarize_trainable_parameters(model: PeftModel) -> Dict[str, int]:
+def summarize_trainable_parameters(model: PeftModelForSeq2SeqLM) -> Dict[str, int]:
     """
     Counts the number of trainable parameters in the model.
     """
