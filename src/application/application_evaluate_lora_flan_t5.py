@@ -34,7 +34,6 @@ def app_evaluate_lora_model(config: ConfigType, api: HfApi):
     metric = load_rouge_metric()
     test_dataset = load_tokenized_eval_dataset()
 
-    """
     predictions, references = [], []
     eval_progress = progress(0., text="Running Predictions")
     n_test_samples = len(test_dataset)
@@ -43,8 +42,6 @@ def app_evaluate_lora_model(config: ConfigType, api: HfApi):
         predictions.append(prediction)
         references.append(reference)
         eval_progress.progress((idx + 1) / n_test_samples, text="Running Predictions")
-    """
-    predictions, references = evaluate_peft_model(model, tokenizer, test_dataset)
 
     rogue = metric.compute(predictions=predictions, references=references, use_stemmer=True)
 
