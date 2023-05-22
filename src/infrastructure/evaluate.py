@@ -1,5 +1,5 @@
-from evaluate import load
+from evaluate import load, EvaluationModule
 
 
-def load_rouge_metric():
+def load_rouge_metric() -> EvaluationModule:
     return load("rouge")
