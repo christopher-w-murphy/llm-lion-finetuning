@@ -1,12 +1,16 @@
 from time import time
+from typing import Tuple, Dict
 
 from huggingface_hub import HfApi
 
 from src.infrastructure.streamlit import ConfigType
 from src.infrastructure.transformers import load_base_model, load_tokenizer
 from src.infrastructure.datasets import load_tokenized_train_dataset
+from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.configuration import get_tokenizer_id, get_base_model_id, get_peft_model_id
-from src.domain.model import get_lora_model, get_data_collator, get_trainer, summarize_trainable_parameters
+from src.domain.model import get_lora_model, get_data_collator, get_training_arguments, get_trainer, summarize_trainable_parameters
+from src.domain.model.optimization import get_optimizers
+from src.domain.model.evaluation import compute_metrics
 from src.infrastructure.huggingface_hub import upload_results_file
 
 
@@ -32,13 +36,21 @@ def app_fine_tune(config: ConfigType, api: HfApi):
     data_collator = get_data_collator(tokenizer, model)
 
     # Create Trainer instance.
+    training_arguments = get_training_arguments(config['model_size'], config['n_epochs'])
+    optimizers = get_optimizers(model, config['optim_name'])
+    rouge = load_rouge_metric()
+
+    def compute_rouge_metric(eval_pred: Tuple[str, str]) -> Dict[str, float]:
+        return compute_metrics(eval_pred, tokenizer, rouge)
+
     trainer = get_trainer(
-        model,
-        data_collator,
-        train_dataset,
-        config['model_size'],
-        config['n_epochs'],
-        config['optim_name']
+        model=model,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+        train_dataset=train_dataset,
+        training_arguments=training_arguments,
+        optimizers=optimizers,
+        compute_metrics_function=compute_rouge_metric
     )
     model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
 
