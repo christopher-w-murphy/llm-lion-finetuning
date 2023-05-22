@@ -1,6 +1,8 @@
 from time import time
 
+from datasets import Dataset
 from huggingface_hub import HfApi
+from transformers import BatchEncoding
 
 from src.infrastructure.streamlit import ConfigType
 from src.infrastructure.datasets import load_samsum_dataset, train_datapath, eval_datapath
@@ -46,8 +48,11 @@ def app_prepare_dataset(config: ConfigType, api: HfApi):
     config['steps'][step]['max_target_length'] = max_target_length
 
     # Preprocess our dataset before training and save it to disk.
+    def preprocess_func(target_dataset: Dataset) -> BatchEncoding:
+        return preprocess_function(target_dataset, tokenizer, max_source_length, max_target_length)
+
     tokenized_dataset = dataset.map(
-        lambda x: preprocess_function(x, tokenizer, max_source_length, max_target_length),
+        preprocess_func,
         batched=True,
         remove_columns=["dialogue", "summary", "id"]
     )
