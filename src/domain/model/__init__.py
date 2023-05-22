@@ -1,7 +1,9 @@
-from typing import Dict
+from typing import Dict, Tuple, Callable
 
+from bitsandbytes.optim.optimizer import Optimizer8bit
 from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
+from torch.optim.lr_scheduler import LambdaLR
 from transformers import (
     PreTrainedModel,
     DataCollatorForSeq2Seq,
@@ -11,7 +13,6 @@ from transformers import (
 )
 
 from src.domain.configuration import label_pad_token_id, get_output_dir
-from src.domain.optimization import get_optimizers
 
 
 def get_lora_config() -> LoraConfig:
@@ -50,32 +51,41 @@ def get_training_arguments(model_size: str, n_epochs: int) -> Seq2SeqTrainingArg
     Define hyperparameters
     """
     output_dir = get_output_dir(model_size)
-    logging_dir = f"{output_dir}/logs"
+    # logging_dir = f"{output_dir}/logs"
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
-        auto_find_batch_size=True,
+        # auto_find_batch_size=True,
         num_train_epochs=n_epochs,
-        logging_dir=logging_dir,
-        logging_strategy="steps",
-        logging_steps=500,
-        save_strategy="no"
+        # logging_dir=logging_dir,
+        # logging_strategy="steps",
+        # logging_steps=500,
+        # save_strategy="no",
+        evaluation_strategy="epoch",
+        predict_with_generate=True,
+        push_to_hub=True,
+        fp16=True,
+        per_device_train_batch_size=128,
+        per_device_eval_batch_size=128,
     )
 
 
 def get_trainer(
         model: PeftModelForSeq2SeqLM,
+        tokenizer: PreTrainedTokenizer,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
-        model_size: str,
-        n_epochs: int,
-        optim_name: str
+        training_arguments: Seq2SeqTrainingArguments,
+        optimizers: Tuple[Optimizer8bit, LambdaLR],
+        compute_metrics_function: Callable
 ) -> Seq2SeqTrainer:
     return Seq2SeqTrainer(
         model=model,
-        args=get_training_arguments(model_size, n_epochs),
+        tokenizer=tokenizer,
+        args=training_arguments,
         data_collator=data_collator,
         train_dataset=train_dataset,
-        optimizers=get_optimizers(model, optim_name)
+        optimizers=optimizers,
+        compute_metrics=compute_metrics_function
     )
 
 

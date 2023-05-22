@@ -9,7 +9,7 @@ from src.infrastructure.peft import load_configuration, load_peft_model
 from src.infrastructure.transformers import load_model_from_config, load_tokenizer_from_config
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.configuration import get_peft_model_id
-from src.domain.evaluation import evaluate_peft_model
+from src.domain.model.evaluation import evaluate_peft_model
 from src.infrastructure.huggingface_hub import upload_results_file
 
 
