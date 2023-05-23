@@ -1,14 +1,13 @@
-from io import BytesIO
+from io import StringIO
 from logging import getLogger, INFO
 from time import time
 from typing import Tuple, Dict
 
 from datasets import Dataset
-from huggingface_hub import login
+from streamlit.runtime.state import SessionStateProxy
 from transformers import BatchEncoding
 
-from src.infrastructure.logging import get_logging_dir, get_file_handler, get_stream_handler
-from src.infrastructure.streamlit import ConfigType, get_secret
+from src.infrastructure.logging import get_stream_handler
 from src.infrastructure.datasets import load_samsum_dataset
 from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
 from src.infrastructure.transformers import load_tokenizer, load_base_model
@@ -17,18 +16,17 @@ from src.domain.model import get_lora_model, summarize_trainable_parameters, get
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import compute_metrics
-from src.infrastructure.huggingface_hub import get_huggingface_hub_connection, upload_results_file, upload_log
+from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log
+from src.infrastructure.streamlit import get_secret
 
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
-# logging_dir = get_logging_dir()
-log_io = BytesIO()
-# logger.addHandler(get_file_handler(logging_dir))
+log_io = StringIO()
 logger.addHandler(get_stream_handler(log_io))
 
 
-def app(config: ConfigType):
+def app(config: SessionStateProxy):
     # Log the configuration.
     for key, val in config.items():
         logger.info(f"{key}: {val}")
@@ -36,9 +34,6 @@ def app(config: ConfigType):
     """
     EL+T
     """
-    # step = 1
-    # config['steps'][step] = dict()
-    # config['steps'][step]['start_epoch'] = time()
     elt_start_epoch = time()
     logger.info(f"EL+T start epoch: {elt_start_epoch}")
 
@@ -49,8 +44,6 @@ def app(config: ConfigType):
         for dataset_name in dataset:
             dataset[dataset_name] = dataset[dataset_name].select(range(limited_samples_count))
 
-    # config['steps'][step]['train_dataset_size'] = len(dataset['train'])
-    # config['steps'][step]['test_dataset_size'] = len(dataset['test'])
     logger.info(f"Train Dataset Size: {len(dataset['train'])}")
     logger.info(f"Test Dataset Size: {len(dataset['test'])}")
 
@@ -63,12 +56,10 @@ def app(config: ConfigType):
 
     tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, "dialogue")
     max_source_length = max_sequence_length(tokenized_inputs)
-    # config['steps'][step]['max_source_length'] = max_source_length
     logger.info(f"Max Source Length: {max_source_length}")
 
     tokenized_targets = tokenize_strings(concatenated_dataset, tokenizer, "summary")
     max_target_length = max_sequence_length(tokenized_targets, 90)
-    # config['steps'][step]['max_target_length'] = max_target_length
     logger.info(f"Max Target Length: {max_target_length}")
 
     # Preprocess our dataset before training and save it to disk.
@@ -76,18 +67,11 @@ def app(config: ConfigType):
         return preprocess_function(target_dataset, tokenizer, max_source_length, max_target_length)
 
     tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=["dialogue", "summary", "id"])
-    train_dataset = tokenized_dataset['train']
-    eval_dataset = tokenized_dataset['test']
-
-    # config['steps'][step]['elasped_time'] = time() - config['steps'][step]['start_epoch']
     logger.info(f"EL+T Elasped Time: {time() - elt_start_epoch}")
 
     """
     Train and Evaluate
     """
-    # step = 2
-    # config['steps'][step] = dict()
-    # config['steps'][step]['start_epoch'] = time()
     train_start_epoch = time()
     logger.info(f"Training & Evaluation Start Epoch: {train_start_epoch}")
 
@@ -97,7 +81,6 @@ def app(config: ConfigType):
 
     # Prepare our model for the LoRA int-8 training using peft.
     model = get_lora_model(model)
-    # config['steps'][step]['trainable_parameters'] = summarize_trainable_parameters(model)
     logger.info(f"Trainable Parameters: {summarize_trainable_parameters(model)}")
 
     # Pad our inputs and labels.
@@ -116,8 +99,8 @@ def app(config: ConfigType):
         model=model,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
+        train_dataset=tokenized_dataset['train'],
+        eval_dataset=tokenized_dataset['test'],
         training_arguments=training_arguments,
         optimizers=optimizers,
         compute_metrics_function=compute_rouge_metric
@@ -126,18 +109,11 @@ def app(config: ConfigType):
 
     # Train model.
     trainer.train()
-
-    # Save our model.
-    login(token=get_secret('HUGGINGFACE_TOKEN'))
-    trainer.push_to_hub()
-
-    # config['steps'][step]['elasped_time'] = time() - config['steps'][step]['start_epoch']
     logger.info(f"Training & Evaluation Elasped Time: {time() - train_start_epoch}")
-    # preserve results
-    api = get_huggingface_hub_connection()
-    # upload_results_file(config, api, step)
 
-    # trainer.save_metrics("train", results.metrics)
-    # upload_file(output_dir, "train_results.json", api)
-
-    upload_log(log_io, api)
+    # Save our model and upload the log.
+    if not mock_saving():
+        token = get_secret('HUGGINGFACE_TOKEN')
+        trainer.push_to_hub(token=token)
+        api = get_huggingface_hub_connection(token=token)
+        upload_log(log_io, api)

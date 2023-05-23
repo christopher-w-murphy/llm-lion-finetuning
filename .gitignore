@@ -1,7 +1,3 @@
 .idea/
 venv/
-data/
-lora-flan-t5-small/
-results-small/
 .streamlit/secrets.toml
-logs/

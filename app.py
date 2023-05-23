@@ -55,8 +55,8 @@ def main():
         run = form_submit_button("Submit Run")
 
     if run:
-        session_state['steps'] = dict()
         """
+        session_state['steps'] = dict()
         api = get_huggingface_hub_connection()
 
         header("Step 1. Load and prepare the Samsum dataset")
