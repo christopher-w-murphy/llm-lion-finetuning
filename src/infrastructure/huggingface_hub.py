@@ -32,3 +32,13 @@ def upload_results_file(config: ConfigType, api: HfApi, step: int):
             repo_id="chriswmurphy/llm-lion-finetuning",
             repo_type="dataset"
         )
+
+
+def upload_file(filename, api):
+    if not mock_saving():
+        api.upload_file(
+            path_or_fileobj=filename,
+            path_in_repo=filename,
+            repo_id="chriswmurphy/llm-lion-finetuning",
+            repo_type="dataset"
+        )

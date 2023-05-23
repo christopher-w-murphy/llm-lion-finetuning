@@ -47,11 +47,11 @@ def get_data_collator(
     )
 
 
-def get_training_arguments(model_size: str, n_epochs: int, optim_name: str) -> Seq2SeqTrainingArguments:
+def get_training_arguments(output_dir: str, n_epochs: int) -> Seq2SeqTrainingArguments:
     """
     Define hyperparameters
     """
-    output_dir = get_output_dir(model_size, optim_name)
+    # output_dir = get_output_dir(model_size, optim_name)
     # logging_dir = f"{output_dir}/logs"
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
