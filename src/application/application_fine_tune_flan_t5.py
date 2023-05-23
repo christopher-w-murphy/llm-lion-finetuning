@@ -1,9 +1,9 @@
 from time import time
 from typing import Tuple, Dict
 
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, login
 
-from src.infrastructure.streamlit import ConfigType
+from src.infrastructure.streamlit import ConfigType, get_secret
 from src.infrastructure.transformers import load_base_model, load_tokenizer
 from src.infrastructure.datasets import load_tokenized_train_dataset
 from src.infrastructure.evaluate import load_rouge_metric
@@ -42,6 +42,8 @@ def app_fine_tune(config: ConfigType, api: HfApi):
 
     def compute_rouge_metric(eval_pred: Tuple[str, str]) -> Dict[str, float]:
         return compute_metrics(eval_pred, tokenizer, rouge)
+
+    login(token=get_secret('HUGGINGFACE_TOKEN'))
 
     trainer = get_trainer(
         model=model,
