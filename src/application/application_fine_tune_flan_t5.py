@@ -59,6 +59,8 @@ def app_fine_tune(config: ConfigType, api: HfApi):
     # Train model.
     trainer.train()
 
+    trainer.push_to_hub()
+
     # Save our model to use it for inference and evaluate it.
     peft_model_id = get_peft_model_id(config['model_size'])
     trainer.model.save_pretrained(peft_model_id)
