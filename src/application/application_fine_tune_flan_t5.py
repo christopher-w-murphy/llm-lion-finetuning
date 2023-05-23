@@ -5,7 +5,7 @@ from huggingface_hub import HfApi, login
 
 from src.infrastructure.streamlit import ConfigType, get_secret
 from src.infrastructure.transformers import load_base_model, load_tokenizer
-from src.infrastructure.datasets import load_tokenized_train_dataset
+from src.infrastructure.datasets import load_tokenized_train_dataset, load_tokenized_eval_dataset
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.configuration import get_tokenizer_id, get_base_model_id, get_peft_model_id
 from src.domain.model import get_lora_model, get_data_collator, get_training_arguments, get_trainer, summarize_trainable_parameters
@@ -21,6 +21,7 @@ def app_fine_tune(config: ConfigType, api: HfApi):
 
     # Load the needed results from step 1.
     train_dataset = load_tokenized_train_dataset()
+    eval_dataset = load_tokenized_eval_dataset()
     tokenizer_id = get_tokenizer_id(config['model_size'])
     tokenizer = load_tokenizer(tokenizer_id)
 
@@ -36,7 +37,7 @@ def app_fine_tune(config: ConfigType, api: HfApi):
     data_collator = get_data_collator(tokenizer, model)
 
     # Create Trainer instance.
-    training_arguments = get_training_arguments(config['model_size'], config['n_epochs'])
+    training_arguments = get_training_arguments(config['model_size'], config['n_epochs'], config['optim_name'])
     optimizers = get_optimizers(model, config['optim_name'])
     rouge = load_rouge_metric()
 
@@ -50,6 +51,7 @@ def app_fine_tune(config: ConfigType, api: HfApi):
         tokenizer=tokenizer,
         data_collator=data_collator,
         train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
         training_arguments=training_arguments,
         optimizers=optimizers,
         compute_metrics_function=compute_rouge_metric

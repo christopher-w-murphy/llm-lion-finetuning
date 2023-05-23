@@ -46,11 +46,11 @@ def get_data_collator(
     )
 
 
-def get_training_arguments(model_size: str, n_epochs: int) -> Seq2SeqTrainingArguments:
+def get_training_arguments(model_size: str, n_epochs: int, optim_name: str) -> Seq2SeqTrainingArguments:
     """
     Define hyperparameters
     """
-    output_dir = get_output_dir(model_size)
+    output_dir = get_output_dir(model_size, optim_name)
     # logging_dir = f"{output_dir}/logs"
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
@@ -62,7 +62,7 @@ def get_training_arguments(model_size: str, n_epochs: int) -> Seq2SeqTrainingArg
         # save_strategy="no",
         evaluation_strategy="epoch",
         predict_with_generate=True,
-        push_to_hub=True,
+        # push_to_hub=True,
         fp16=True,
         per_device_train_batch_size=128,
         per_device_eval_batch_size=128,
@@ -74,6 +74,7 @@ def get_trainer(
         tokenizer: PreTrainedTokenizer,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
+        eval_dataset: Dataset,
         training_arguments: Seq2SeqTrainingArguments,
         optimizers: Tuple[Optimizer8bit, LambdaLR],
         compute_metrics_function: Callable
@@ -84,6 +85,7 @@ def get_trainer(
         args=training_arguments,
         data_collator=data_collator,
         train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
         optimizers=optimizers,
         compute_metrics=compute_metrics_function
     )

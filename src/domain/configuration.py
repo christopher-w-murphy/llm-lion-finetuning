@@ -20,13 +20,16 @@ def get_tokenizer_id(model_size: str) -> str:
         raise ValueError('Invalid model size.')
 
 
-def get_output_dir(model_size: str) -> str:
+def get_output_dir(model_size: str, optim_name: str) -> str:
+    """
     if model_size.lower() == 'small':
         return "lora-flan-t5-small"
     elif model_size.lower() == 'xxl':
         return "lora-flan-t5-xxl"
     else:
         raise ValueError('Invalid model size.')
+    """
+    return f"lora-flan-t5-{model_size.lower()}-{optim_name.lower()}"
 
 
 def get_peft_model_id(model_size: str) -> str:
