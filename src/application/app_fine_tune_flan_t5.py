@@ -68,7 +68,7 @@ def app(config: SessionStateProxy):
         return preprocess_function(target_dataset, tokenizer, max_source_length, max_target_length)
 
     tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=["dialogue", "summary", "id"])
-    logger.info(f"EL+T Elasped Time: {time() - elt_start_epoch}")
+    logger.info(f"EL+T Elasped Time [s]: {time() - elt_start_epoch}")
 
     """
     Train and Evaluate
@@ -110,7 +110,7 @@ def app(config: SessionStateProxy):
 
     # Train model.
     trainer.train()
-    logger.info(f"Training & Evaluation Elasped Time: {time() - train_start_epoch}")
+    logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
     # Save our model and upload the log.
     if not mock_saving():
