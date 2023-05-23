@@ -100,8 +100,8 @@ def app(config: SessionStateProxy):
         model=model,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        train_dataset=dataset['train'],  # tokenized_dataset['train'],
-        eval_dataset=dataset['test'],  # tokenized_dataset['test'],
+        train_dataset=tokenized_dataset['train'],
+        eval_dataset=tokenized_dataset['test'],
         training_arguments=training_arguments,
         optimizers=optimizers,
         compute_metrics_function=compute_rouge_metric
