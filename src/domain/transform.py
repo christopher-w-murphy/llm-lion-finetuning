@@ -44,7 +44,8 @@ def preprocess_function(
     labels = tokenizer(
         text_target=sample_data["summary"],
         max_length=max_target_length,
-        padding=padding, truncation=True
+        padding=padding,
+        truncation=True
     )
 
     if padding == "max_length":
