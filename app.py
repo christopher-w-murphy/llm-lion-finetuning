@@ -11,10 +11,10 @@ from streamlit import (
     success
 )
 
-from src.infrastructure.huggingface_hub import get_huggingface_hub_connection
-from src.application.application_prepare_samsum_dataset import app_prepare_dataset
-from src.application.application_fine_tune_flan_t5 import app_fine_tune
-from src.application.application_evaluate_lora_flan_t5 import app_evaluate_lora_model
+# from src.infrastructure.huggingface_hub import get_huggingface_hub_connection
+# from src.application.application_prepare_samsum_dataset import app_prepare_dataset
+# from src.application.application_fine_tune_flan_t5 import app_fine_tune
+# from src.application.application_evaluate_lora_flan_t5 import app_evaluate_lora_model
 from src.application.app_fine_tune_flan_t5 import app
 
 
