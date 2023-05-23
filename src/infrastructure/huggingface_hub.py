@@ -5,7 +5,6 @@ from typing import Optional
 
 from huggingface_hub import HfApi
 
-from src.infrastructure.streamlit import get_secret
 from src.infrastructure.utilities import strtobool
 
 

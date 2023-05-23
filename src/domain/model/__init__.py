@@ -12,7 +12,7 @@ from transformers import (
     Seq2SeqTrainer
 )
 
-from src.domain.configuration import label_pad_token_id, get_output_dir
+from src.domain.configuration import label_pad_token_id
 from src.domain.model.optimization import batch_size
 
 
@@ -51,20 +51,11 @@ def get_training_arguments(output_dir: str, n_epochs: int) -> Seq2SeqTrainingArg
     """
     Define hyperparameters
     """
-    # output_dir = get_output_dir(model_size, optim_name)
-    # logging_dir = f"{output_dir}/logs"
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
-        # auto_find_batch_size=True,
         num_train_epochs=n_epochs,
-        # logging_dir=logging_dir,
-        # logging_strategy="steps",
-        # logging_steps=500,
-        # save_strategy="no",
         evaluation_strategy="epoch",
         predict_with_generate=True,
-        # push_to_hub=True,
-        # fp16=True,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
     )
