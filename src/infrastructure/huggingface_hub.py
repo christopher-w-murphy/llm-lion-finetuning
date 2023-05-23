@@ -18,9 +18,10 @@ def mock_saving() -> bool:
     return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
 
 
-def format_log_filename() -> str:
-    log_upload_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    return f"log_{log_upload_time}.txt"
+def format_log_filename(log_upload_time: Optional[datetime] = None) -> str:
+    if log_upload_time is None:
+        log_upload_time = datetime.now()
+    return f"log_{log_upload_time.strftime('%Y-%m-%d_%H:%M:%S')}.txt"
 
 
 def upload_log(log_sio: StringIO, api: Optional[HfApi] = None):
