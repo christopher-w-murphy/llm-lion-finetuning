@@ -13,6 +13,7 @@ from transformers import (
 )
 
 from src.domain.configuration import label_pad_token_id, get_output_dir
+from src.domain.model.optimization import batch_size
 
 
 def get_lora_config() -> LoraConfig:
@@ -63,9 +64,9 @@ def get_training_arguments(model_size: str, n_epochs: int, optim_name: str) -> S
         evaluation_strategy="epoch",
         predict_with_generate=True,
         # push_to_hub=True,
-        fp16=True,
-        per_device_train_batch_size=128,
-        per_device_eval_batch_size=128,
+        # fp16=True,
+        per_device_train_batch_size=batch_size,
+        per_device_eval_batch_size=batch_size,
     )
 
 
