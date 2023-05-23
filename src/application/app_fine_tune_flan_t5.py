@@ -1,9 +1,11 @@
 from io import StringIO
 from logging import getLogger, INFO
+from os import getenv
 from time import time
 from typing import Tuple, Dict
 
 from datasets import Dataset
+from huggingface_hub import login, logout
 from streamlit.runtime.state import SessionStateProxy
 from transformers import BatchEncoding
 
@@ -17,7 +19,6 @@ from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import compute_metrics
 from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log
-from src.infrastructure.streamlit import get_secret
 
 
 logger = getLogger(__name__)
@@ -113,7 +114,9 @@ def app(config: SessionStateProxy):
 
     # Save our model and upload the log.
     if not mock_saving():
-        token = get_secret('HUGGINGFACE_TOKEN')
-        trainer.push_to_hub(token=token)
+        token = getenv('HUGGINGFACE_TOKEN')
+        login(token=token)
+        trainer.push_to_hub()
         api = get_huggingface_hub_connection(token=token)
         upload_log(log_io, api)
+        logout()
