@@ -7,6 +7,7 @@ from streamlit import (
     form_submit_button,
     header,
     session_state,
+    spinner,
     success
 )
 
@@ -14,6 +15,7 @@ from src.infrastructure.huggingface_hub import get_huggingface_hub_connection
 from src.application.application_prepare_samsum_dataset import app_prepare_dataset
 from src.application.application_fine_tune_flan_t5 import app_fine_tune
 from src.application.application_evaluate_lora_flan_t5 import app_evaluate_lora_model
+from src.application.app_fine_tune_flan_t5 import app
 
 
 def main():
@@ -54,6 +56,7 @@ def main():
 
     if run:
         session_state['steps'] = dict()
+        """
         api = get_huggingface_hub_connection()
 
         header("Step 1. Load and prepare the Samsum dataset")
@@ -62,8 +65,12 @@ def main():
         header("Step 2. Fine-Tune T5 with LoRA and bnb int-8")
         app_fine_tune(session_state, api)
 
-        # header("Step 3. Evaluate & run Inference with LoRA FLAN-T5")
-        # app_evaluate_lora_model(session_state, api)
+        header("Step 3. Evaluate & run Inference with LoRA FLAN-T5")
+        app_evaluate_lora_model(session_state, api)
+        """
+        header("Fine-Tune T5 with LoRA and bnb int-8 on Samsum dataset.")
+        with spinner("This may take a while..."):
+            app(session_state)
 
         success('Training and Evaluation complete!')
 
