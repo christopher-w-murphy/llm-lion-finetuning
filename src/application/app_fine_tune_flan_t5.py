@@ -22,7 +22,9 @@ from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_
 
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+# logger.setLevel(INFO)
+from logging import DEBUG
+logger.setLevel(DEBUG)
 log_io = StringIO()
 logger.addHandler(get_stream_handler(log_io))
 
@@ -39,7 +41,9 @@ def app(config: SessionStateProxy):
     logger.info(f"EL+T start epoch: {elt_start_epoch}")
 
     # Load the `samsum` dataset.
+    logger.debug("Before: dataset = load_samsum_dataset()")
     dataset = load_samsum_dataset()
+    logger.debug("After: dataset = load_samsum_dataset()")
 
     if config['limit_samples']:
         for dataset_name in dataset:
@@ -50,24 +54,38 @@ def app(config: SessionStateProxy):
 
     # We need to convert our inputs (text) to token IDs.
     tokenizer_id = get_tokenizer_id(config['model_size'])
+    logger.debug("Before: tokenizer = load_tokenizer(tokenizer_id)")
     tokenizer = load_tokenizer(tokenizer_id)
+    logger.debug("After: tokenizer = load_tokenizer(tokenizer_id)")
 
     # Batch our data efficiently.
+    logger.debug("Before: concatenated_dataset = concatenate_train_test_data(dataset)")
     concatenated_dataset = concatenate_train_test_data(dataset)
+    logger.debug("After: concatenated_dataset = concatenate_train_test_data(dataset)")
 
+    logger.debug("Before: tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, 'dialogue')")
     tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, "dialogue")
+    logger.debug("After: tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, 'dialogue')")
+    logger.debug("Before: max_source_length = max_sequence_length(tokenized_inputs)")
     max_source_length = max_sequence_length(tokenized_inputs)
+    logger.debug("After: max_source_length = max_sequence_length(tokenized_inputs)")
     logger.info(f"Max Source Length: {max_source_length}")
 
+    logger.debug("Before: tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, 'summary')")
     tokenized_targets = tokenize_strings(concatenated_dataset, tokenizer, "summary")
+    logger.debug("After: tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, 'summary')")
+    logger.debug("Before: max_target_length = max_sequence_length(tokenized_targets, 90)")
     max_target_length = max_sequence_length(tokenized_targets, 90)
+    logger.debug("After: max_target_length = max_sequence_length(tokenized_targets, 90)")
     logger.info(f"Max Target Length: {max_target_length}")
 
     # Preprocess our dataset before training and save it to disk.
     def preprocess_func(target_dataset: Dataset) -> BatchEncoding:
         return preprocess_function(target_dataset, tokenizer, max_source_length, max_target_length)
 
+    logger.debug("Before: tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=[...])")
     tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=["dialogue", "summary", "id"])
+    logger.debug("After: tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=[...])")
     logger.info(f"EL+T Elasped Time [s]: {time() - elt_start_epoch}")
 
     """
@@ -78,24 +96,35 @@ def app(config: SessionStateProxy):
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
+    logger.debug("Before: model = load_base_model(base_model_id)")
     model = load_base_model(base_model_id)
+    logger.debug("After: model = load_base_model(base_model_id)")
 
     # Prepare our model for the LoRA int-8 training using peft.
+    logger.debug("Before: model = get_lora_model(model)")
     model = get_lora_model(model)
+    logger.debug("After: model = get_lora_model(model)")
     logger.info(f"Trainable Parameters: {summarize_trainable_parameters(model)}")
 
     # Pad our inputs and labels.
+    logger.debug("Before: data_collator = get_data_collator(tokenizer, model)")
     data_collator = get_data_collator(tokenizer, model)
+    logger.debug("After: data_collator = get_data_collator(tokenizer, model)")
 
     # Create Trainer instance.
     output_dir = get_output_dir(config['model_size'], config['optim_name'])
     training_arguments = get_training_arguments(output_dir, config['n_epochs'])
+    logger.debug("Before: optimizers = get_optimizers(model, config['optim_name'])")
     optimizers = get_optimizers(model, config['optim_name'])
+    logger.debug("After: optimizers = get_optimizers(model, config['optim_name'])")
+    logger.debug("Before: rouge = load_rouge_metric()")
     rouge = load_rouge_metric()
+    logger.debug("After: rouge = load_rouge_metric()")
 
     def compute_rouge_metric(eval_pred: Tuple[str, str]) -> Dict[str, float]:
         return compute_metrics(eval_pred, tokenizer, rouge)
 
+    logger.debug("Before: trainer = get_trainer(...)")
     trainer = get_trainer(
         model=model,
         tokenizer=tokenizer,
@@ -106,10 +135,13 @@ def app(config: SessionStateProxy):
         optimizers=optimizers,
         compute_metrics_function=compute_rouge_metric
     )
+    logger.debug("After: trainer = get_trainer(...)")
     model.config.use_cache = False  # silence the warnings.
 
     # Train model.
+    logger.debug("Before: trainer.train()")
     trainer.train()
+    logger.debug("After: trainer.train()")
     logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
     # Save our model and upload the log.
