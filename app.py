@@ -62,8 +62,8 @@ def main():
         header("Step 2. Fine-Tune T5 with LoRA and bnb int-8")
         app_fine_tune(session_state, api)
 
-        header("Step 3. Evaluate & run Inference with LoRA FLAN-T5")
-        app_evaluate_lora_model(session_state, api)
+        # header("Step 3. Evaluate & run Inference with LoRA FLAN-T5")
+        # app_evaluate_lora_model(session_state, api)
 
         success('Training and Evaluation complete!')
 
