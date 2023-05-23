@@ -73,7 +73,7 @@ def get_trainer(
 ) -> Seq2SeqTrainer:
     return Seq2SeqTrainer(
         model=model,
-        tokenizer=tokenizer,
+        # tokenizer=tokenizer,
         args=training_arguments,
         data_collator=data_collator,
         train_dataset=train_dataset,
