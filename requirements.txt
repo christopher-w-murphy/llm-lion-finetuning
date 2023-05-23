@@ -11,3 +11,4 @@ altair<5
 rouge-score==0.1.2
 huggingface-hub==0.14.1
 torch==2.0.1
+pytest==7.3.1
