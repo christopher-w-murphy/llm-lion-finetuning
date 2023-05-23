@@ -22,9 +22,7 @@ from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_
 
 
 logger = getLogger(__name__)
-# logger.setLevel(INFO)
-from logging import DEBUG
-logger.setLevel(DEBUG)
+logger.setLevel(INFO)
 log_io = StringIO()
 logger.addHandler(get_stream_handler(log_io))
 
@@ -80,52 +78,38 @@ def app(config: SessionStateProxy):
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
-    logger.debug("Before: model = load_base_model(base_model_id)")
     model = load_base_model(base_model_id)
-    logger.debug("After: model = load_base_model(base_model_id)")
 
     # Prepare our model for the LoRA int-8 training using peft.
-    logger.debug("Before: model = get_lora_model(model)")
     model = get_lora_model(model)
-    logger.debug("After: model = get_lora_model(model)")
     logger.info(f"Trainable Parameters: {summarize_trainable_parameters(model)}")
 
     # Pad our inputs and labels.
-    logger.debug("Before: data_collator = get_data_collator(tokenizer, model)")
     data_collator = get_data_collator(tokenizer, model)
-    logger.debug("After: data_collator = get_data_collator(tokenizer, model)")
 
     # Create Trainer instance.
     output_dir = get_output_dir(config['model_size'], config['optim_name'])
     training_arguments = get_training_arguments(output_dir, config['n_epochs'])
-    logger.debug("Before: optimizers = get_optimizers(model, config['optim_name'])")
     optimizers = get_optimizers(model, config['optim_name'])
-    logger.debug("After: optimizers = get_optimizers(model, config['optim_name'])")
-    logger.debug("Before: rouge = load_rouge_metric()")
     rouge = load_rouge_metric()
-    logger.debug("After: rouge = load_rouge_metric()")
 
     def compute_rouge_metric(eval_pred: Tuple[str, str]) -> Dict[str, float]:
         return compute_metrics(eval_pred, tokenizer, rouge)
 
-    logger.debug("Before: trainer = get_trainer(...)")
     trainer = get_trainer(
         model=model,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        train_dataset=tokenized_dataset['train'],
-        eval_dataset=tokenized_dataset['test'],
+        train_dataset=dataset['train'],  # tokenized_dataset['train'],
+        eval_dataset=dataset['test'],  # tokenized_dataset['test'],
         training_arguments=training_arguments,
         optimizers=optimizers,
         compute_metrics_function=compute_rouge_metric
     )
-    logger.debug("After: trainer = get_trainer(...)")
     model.config.use_cache = False  # silence the warnings.
 
     # Train model.
-    logger.debug("Before: trainer.train()")
     trainer.train()
-    logger.debug("After: trainer.train()")
     logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
     # Save our model and upload the log.
