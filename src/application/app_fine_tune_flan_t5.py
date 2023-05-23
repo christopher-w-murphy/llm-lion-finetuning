@@ -1,3 +1,4 @@
+from io import BytesIO
 from logging import getLogger, INFO
 from time import time
 from typing import Tuple, Dict
@@ -6,7 +7,7 @@ from datasets import Dataset
 from huggingface_hub import login
 from transformers import BatchEncoding
 
-from src.infrastructure.logging import get_logging_dir, get_file_handler
+from src.infrastructure.logging import get_logging_dir, get_file_handler, get_stream_handler
 from src.infrastructure.streamlit import ConfigType, get_secret
 from src.infrastructure.datasets import load_samsum_dataset
 from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
@@ -16,17 +17,19 @@ from src.domain.model import get_lora_model, summarize_trainable_parameters, get
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import compute_metrics
-from src.infrastructure.huggingface_hub import get_huggingface_hub_connection, upload_results_file, upload_file
+from src.infrastructure.huggingface_hub import get_huggingface_hub_connection, upload_results_file, upload_log
 
 
 logger = getLogger(__name__)
 logger.setLevel(INFO)
-logging_dir = get_logging_dir()
-logger.addHandler(get_file_handler(logging_dir))
+# logging_dir = get_logging_dir()
+log_io = BytesIO()
+# logger.addHandler(get_file_handler(logging_dir))
+logger.addHandler(get_stream_handler(log_io))
 
 
 def app(config: ConfigType):
-    # Log Config
+    # Log the configuration.
     for key, val in config.items():
         logger.info(f"{key}: {val}")
 
@@ -137,4 +140,4 @@ def app(config: ConfigType):
     # trainer.save_metrics("train", results.metrics)
     # upload_file(output_dir, "train_results.json", api)
 
-    upload_file(str(get_logging_dir()), api)
+    upload_log(log_io, api)

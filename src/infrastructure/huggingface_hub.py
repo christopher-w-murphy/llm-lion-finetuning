@@ -1,4 +1,5 @@
 from datetime import datetime
+from io import BytesIO
 from os import getenv
 
 from huggingface_hub import HfApi
@@ -34,11 +35,16 @@ def upload_results_file(config: ConfigType, api: HfApi, step: int):
         )
 
 
-def upload_file(filename, api):
+def format_log_filename() -> str:
+    log_upload_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    return f"log_{log_upload_time}.txt"
+
+
+def upload_log(log_io: BytesIO, api: HfApi):
     if not mock_saving():
         api.upload_file(
-            path_or_fileobj=filename,
-            path_in_repo=filename,
+            path_or_fileobj=log_io,
+            path_in_repo=format_log_filename(),
             repo_id="chriswmurphy/llm-lion-finetuning",
             repo_type="dataset"
         )

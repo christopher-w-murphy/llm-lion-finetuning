@@ -1,5 +1,6 @@
 from datetime import datetime
-from logging import INFO, Formatter, FileHandler
+from io import BytesIO
+from logging import INFO, Formatter, FileHandler, StreamHandler
 from pathlib import Path
 
 
@@ -19,3 +20,10 @@ def get_file_handler(logging_dir: Path) -> FileHandler:
     file_handler.setLevel(INFO)
     file_handler.setFormatter(get_formatter())
     return file_handler
+
+
+def get_stream_handler(io: BytesIO) -> StreamHandler:
+    stream_handler = StreamHandler(io)
+    stream_handler.setLevel(INFO)
+    stream_handler.setFormatter(get_formatter())
+    return stream_handler
