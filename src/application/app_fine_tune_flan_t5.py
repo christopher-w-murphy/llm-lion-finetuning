@@ -120,6 +120,8 @@ def app(config: SessionStateProxy):
         token = getenv('HUGGINGFACE_TOKEN')
         login(token=token)
         trainer.push_to_hub()
+        for obj in trainer.state.log_history:
+            print(obj)
         trainer.model.push_to_hub(output_dir)
         api = get_huggingface_hub_connection(token=token)
         upload_log(log_io, api)
