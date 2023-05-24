@@ -122,8 +122,6 @@ def app(config: SessionStateProxy):
         trainer.push_to_hub()
         print(trainer.state.log_history)
         print(memory_stats())
-        for obj in trainer.state.log_history:
-            print(obj)
         trainer.model.push_to_hub(output_dir)
         api = get_huggingface_hub_connection(token=token)
         upload_log(log_io, api)
