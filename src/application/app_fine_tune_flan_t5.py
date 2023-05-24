@@ -7,7 +7,7 @@ from typing import Tuple, Dict
 from datasets import Dataset
 from huggingface_hub import login, logout
 from streamlit.runtime.state import SessionStateProxy
-from torch.cuda import memory_summary
+from torch.cuda import memory_summary, memory_stats
 from transformers import BatchEncoding
 
 from src.infrastructure.logging import get_log_level, get_stream_handler
@@ -120,6 +120,8 @@ def app(config: SessionStateProxy):
         token = getenv('HUGGINGFACE_TOKEN')
         login(token=token)
         trainer.push_to_hub()
+        print(trainer.state.log_history)
+        print(memory_stats())
         for obj in trainer.state.log_history:
             print(obj)
         trainer.model.push_to_hub(output_dir)
