@@ -1,8 +1,8 @@
 from typing import Dict, Tuple, Callable
 
-from bitsandbytes.optim.optimizer import Optimizer8bit
 from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
+from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LambdaLR
 from transformers import (
     PreTrainedModel,
@@ -68,7 +68,7 @@ def get_trainer(
         train_dataset: Dataset,
         eval_dataset: Dataset,
         training_arguments: Seq2SeqTrainingArguments,
-        optimizers: Tuple[Optimizer8bit, LambdaLR],
+        optimizers: Tuple[Optimizer, LambdaLR],
         compute_metrics_function: Callable
 ) -> Seq2SeqTrainer:
     return Seq2SeqTrainer(
