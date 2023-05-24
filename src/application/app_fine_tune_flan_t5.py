@@ -1,5 +1,5 @@
 from io import StringIO
-from logging import getLogger, INFO
+from logging import getLogger
 from os import getenv
 from time import time
 from typing import Tuple, Dict
@@ -7,9 +7,10 @@ from typing import Tuple, Dict
 from datasets import Dataset
 from huggingface_hub import login, logout
 from streamlit.runtime.state import SessionStateProxy
+from torch.cuda import memory_summary
 from transformers import BatchEncoding
 
-from src.infrastructure.logging import get_stream_handler
+from src.infrastructure.logging import get_log_level, get_stream_handler
 from src.infrastructure.datasets import load_samsum_dataset
 from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
 from src.infrastructure.transformers import load_tokenizer, load_base_model
@@ -22,7 +23,7 @@ from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_
 
 
 logger = getLogger(__name__)
-logger.setLevel(INFO)
+logger.setLevel(get_log_level())
 log_io = StringIO()
 logger.addHandler(get_stream_handler(log_io))
 
@@ -110,6 +111,7 @@ def app(config: SessionStateProxy):
 
     # Train model.
     trainer.train()
+    logger.info(f"GPU Memory Summary: {memory_summary()}")
     logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
     # Save our model and upload the log.
