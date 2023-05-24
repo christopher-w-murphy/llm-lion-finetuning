@@ -4,13 +4,7 @@ from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import (
-    PreTrainedModel,
-    DataCollatorForSeq2Seq,
-    PreTrainedTokenizer,
-    Seq2SeqTrainingArguments,
-    Seq2SeqTrainer
-)
+from transformers import PreTrainedModel, DataCollatorForSeq2Seq, PreTrainedTokenizer, Seq2SeqTrainingArguments, Seq2SeqTrainer
 
 from src.domain.configuration import label_pad_token_id
 from src.domain.model.optimization import batch_size
@@ -35,10 +29,7 @@ def get_lora_model(base_model: PreTrainedModel) -> PeftModelForSeq2SeqLM:
     return PeftModelForSeq2SeqLM(model, lora_config)
 
 
-def get_data_collator(
-        tokenizer: PreTrainedTokenizer,
-        model: PeftModelForSeq2SeqLM
-) -> DataCollatorForSeq2Seq:
+def get_data_collator(tokenizer: PreTrainedTokenizer, model: PeftModelForSeq2SeqLM) -> DataCollatorForSeq2Seq:
     return DataCollatorForSeq2Seq(
         tokenizer,
         model=model,
@@ -96,4 +87,8 @@ def summarize_trainable_parameters(model: PeftModelForSeq2SeqLM) -> Dict[str, in
         all_params += num_params
         if param.requires_grad:
             trainable_params += num_params
-    return {'trainable_params': trainable_params, 'all_params': all_params}
+    return {
+        'trainable_params': trainable_params,
+        'all_params': all_params,
+        'trainable_params_pct': trainable_params / all_params
+    }
