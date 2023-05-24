@@ -111,8 +111,7 @@ def app(config: SessionStateProxy):
 
     # Train model.
     trainer.train()
-    logger.info(f"LoRA Checkpoint Memory Footprint: {trainer.model.get_memory_footprint(return_buffers=False)}")
-    logger.info(f"Base Model Memory Footprint: {trainer.model.base_model.get_memory_footprint(return_buffers=False)}")
+    logger.info(f"Model Memory Footprint: {trainer.model.get_memory_footprint(return_buffers=False)}")
     logger.info(f"GPU Memory Summary:\n{memory_summary()}")
     logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
