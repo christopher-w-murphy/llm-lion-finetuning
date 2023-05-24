@@ -111,7 +111,9 @@ def app(config: SessionStateProxy):
 
     # Train model.
     trainer.train()
-    logger.info(f"GPU Memory Summary: {memory_summary()}")
+    logger.info(f"LoRA Checkpoint Memory Footprint: {trainer.model.get_memory_footprint(return_buffers=False)}")
+    logger.info(f"Base Model Memory Footprint: {trainer.model.base_model.get_memory_footprint(return_buffers=False)}")
+    logger.info(f"GPU Memory Summary:\n{memory_summary()}")
     logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
 
     # Save our model and upload the log.
@@ -119,6 +121,7 @@ def app(config: SessionStateProxy):
         token = getenv('HUGGINGFACE_TOKEN')
         login(token=token)
         trainer.push_to_hub()
+        trainer.model.push_to_hub(output_dir)
         api = get_huggingface_hub_connection(token=token)
         upload_log(log_io, api)
         logout()
