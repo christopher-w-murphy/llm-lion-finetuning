@@ -88,7 +88,7 @@ def app(config: SessionStateProxy):
     log['train_and_eval'] = dict()
     # train_start_epoch = time()
     # logger.info(f"Training & Evaluation Start Epoch: {train_start_epoch}")
-    log['train_and_eval']['start_time'] = time()
+    log['train_and_eval']['start_epoch'] = time()
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
