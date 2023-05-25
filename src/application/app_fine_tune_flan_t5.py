@@ -24,20 +24,24 @@ from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_
 
 logger = getLogger(__name__)
 logger.setLevel(get_log_level())
-log_io = StringIO()
-logger.addHandler(get_stream_handler(log_io))
+# log_io = StringIO()
+# logger.addHandler(get_stream_handler(log_io))
 
 
 def app(config: SessionStateProxy):
+    log = dict()
+    log['streamlit_config'] = {key: val for key, val in config.items()}
     # Log the configuration.
-    for key, val in config.items():
-        logger.info(f"{key}: {val}")
+    for key, val in log['streamlit_config'].items():
+        logger.info(f"streamlit_config - {key}: {val}")
 
     """
     EL+T
     """
-    elt_start_epoch = time()
-    logger.info(f"EL+T start epoch: {elt_start_epoch}")
+    log['elt'] = dict()
+    # elt_start_epoch = time()
+    # logger.info(f"EL+T start epoch: {elt_start_epoch}")
+    log['elt']['start_epoch'] = time()
 
     # Load the `samsum` dataset.
     dataset = load_samsum_dataset()
@@ -46,8 +50,10 @@ def app(config: SessionStateProxy):
         for dataset_name in dataset:
             dataset[dataset_name] = dataset[dataset_name].select(range(limited_samples_count))
 
-    logger.info(f"Train Dataset Size: {len(dataset['train'])}")
-    logger.info(f"Test Dataset Size: {len(dataset['test'])}")
+    # logger.info(f"Train Dataset Size: {len(dataset['train'])}")
+    # logger.info(f"Test Dataset Size: {len(dataset['test'])}")
+    log['elt']['train_dataset_size'] = len(dataset['train'])
+    log['elt']['test_dataset_size'] = len(dataset['test'])
 
     # We need to convert our inputs (text) to token IDs.
     tokenizer_id = get_tokenizer_id(config['model_size'])
@@ -58,24 +64,31 @@ def app(config: SessionStateProxy):
 
     tokenized_inputs = tokenize_strings(concatenated_dataset, tokenizer, "dialogue")
     max_source_length = max_sequence_length(tokenized_inputs)
-    logger.info(f"Max Source Length: {max_source_length}")
+    # logger.info(f"Max Source Length: {max_source_length}")
+    log['elt']['max_source_length'] = max_source_length
 
     tokenized_targets = tokenize_strings(concatenated_dataset, tokenizer, "summary")
     max_target_length = max_sequence_length(tokenized_targets, 90)
-    logger.info(f"Max Target Length: {max_target_length}")
+    # logger.info(f"Max Target Length: {max_target_length}")
+    log['elt']['max_target_length'] = max_target_length
 
     # Preprocess our dataset before training and save it to disk.
     def preprocess_func(target_dataset: Dataset) -> BatchEncoding:
         return preprocess_function(target_dataset, tokenizer, max_source_length, max_target_length)
 
     tokenized_dataset = dataset.map(preprocess_func, batched=True, remove_columns=["dialogue", "summary", "id"])
-    logger.info(f"EL+T Elasped Time [s]: {time() - elt_start_epoch}")
+    # logger.info(f"EL+T Elasped Time [s]: {time() - elt_start_epoch}")
+    log['elt']['elasped_time'] = time() - log['elt']['start_epoch']
+    for key, val in log['elt'].items():
+        logger.info(f"elt - {key}: {val}")
 
     """
     Train and Evaluate
     """
-    train_start_epoch = time()
-    logger.info(f"Training & Evaluation Start Epoch: {train_start_epoch}")
+    log['train_and_eval'] = dict()
+    # train_start_epoch = time()
+    # logger.info(f"Training & Evaluation Start Epoch: {train_start_epoch}")
+    log['train_and_eval']['start_time'] = time()
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
@@ -83,7 +96,8 @@ def app(config: SessionStateProxy):
 
     # Prepare our model for the LoRA int-8 training using peft.
     model = get_lora_model(model)
-    logger.info(f"Trainable Parameters: {summarize_trainable_parameters(model)}")
+    # logger.info(f"Trainable Parameters: {summarize_trainable_parameters(model)}")
+    log['train_and_eval']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
 
     # Pad our inputs and labels.
     data_collator = get_data_collator(tokenizer, model)
@@ -99,7 +113,7 @@ def app(config: SessionStateProxy):
 
     trainer = get_trainer(
         model=model,
-        tokenizer=tokenizer,
+        # tokenizer=tokenizer,
         data_collator=data_collator,
         train_dataset=tokenized_dataset['train'],
         eval_dataset=tokenized_dataset['test'],
@@ -111,18 +125,23 @@ def app(config: SessionStateProxy):
 
     # Train model.
     trainer.train()
-    logger.info(f"Model Memory Footprint: {trainer.model.get_memory_footprint(return_buffers=False)}")
-    logger.info(f"GPU Memory Summary:\n{memory_summary()}")
-    logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
+    # logger.info(f"Model Memory Footprint: {trainer.model.get_memory_footprint(return_buffers=False)}")
+    # logger.info(f"GPU Memory Summary:\n{memory_summary()}")
+    # logger.info(f"Training & Evaluation Elasped Time [s]: {time() - train_start_epoch}")
+    log['train_and_eval']['trainer_log'] = trainer.state.log_history
+    log['train_and_eval']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
+    log['train_and_eval']['cuda_memory_stats'] = memory_stats()
+    log['train_and_eval']['elasped_time'] = time() - log['train_and_eval']['start_epoch']
+    for key, val in log['train_and_eval'].items():
+        logger.info(f"train_and_eval - {key}: {val}")
 
     # Save our model and upload the log.
     if not mock_saving():
         token = getenv('HUGGINGFACE_TOKEN')
         login(token=token)
-        trainer.push_to_hub()
-        print(trainer.state.log_history)
-        print(memory_stats())
+        # trainer.push_to_hub()
         trainer.model.push_to_hub(output_dir)
         api = get_huggingface_hub_connection(token=token)
-        upload_log(log_io, api)
+        # upload_log(log_io, api)
+        upload_log(log, api)
         logout()

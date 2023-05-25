@@ -1,7 +1,8 @@
 from datetime import datetime
 from io import BytesIO, StringIO
+from json import dump
 from os import getenv
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from huggingface_hub import HfApi
 
@@ -18,18 +19,42 @@ def mock_saving() -> bool:
     return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
 
 
-def format_log_filename(log_upload_time: Optional[datetime] = None) -> str:
+def format_log_filename_old(log_upload_time: Optional[datetime] = None) -> str:
     if log_upload_time is None:
         log_upload_time = datetime.now()
     return f"log_{log_upload_time.strftime('%Y-%m-%d_%H:%M:%S')}.txt"
 
 
-def upload_log(log_sio: StringIO, api: Optional[HfApi] = None):
+def upload_log_old(log_sio: StringIO, api: Optional[HfApi] = None):
     if api is None:
         api = get_huggingface_hub_connection()
 
     log_bio = BytesIO(log_sio.getvalue().encode('utf8'))
 
+    api.upload_file(
+        path_or_fileobj=log_bio,
+        path_in_repo=format_log_filename(),
+        repo_id="chriswmurphy/llm-lion-finetuning",
+        repo_type="dataset"
+    )
+
+
+def format_log_filename(upload_time: Optional[datetime] = None) -> str:
+    if upload_time is None:
+        upload_time = datetime.now()
+    return f"log_{upload_time.strftime('%Y-%m-%d_%H:%M:%S')}.json"
+
+
+def dicttobytes(dict_obj: Dict[str, Any]) -> BytesIO:
+    sio = StringIO()
+    dump(dict_obj, sio)
+    return BytesIO(sio.getvalue().encode('utf8'))
+
+
+def upload_log(log_dict: Dict[str, Any], api: Optional[HfApi] = None):
+    log_bio = dicttobytes(log_dict)
+    if api is None:
+        api = get_huggingface_hub_connection()
     api.upload_file(
         path_or_fileobj=log_bio,
         path_in_repo=format_log_filename(),
