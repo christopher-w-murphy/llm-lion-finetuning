@@ -54,7 +54,7 @@ def get_training_arguments(output_dir: str, n_epochs: int) -> Seq2SeqTrainingArg
 
 def get_trainer(
         model: PeftModelForSeq2SeqLM,
-        tokenizer: PreTrainedTokenizer,
+        # tokenizer: PreTrainedTokenizer,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
         eval_dataset: Dataset,
@@ -64,7 +64,7 @@ def get_trainer(
 ) -> Seq2SeqTrainer:
     return Seq2SeqTrainer(
         model=model,
-        tokenizer=tokenizer,
+        # tokenizer=tokenizer,
         args=training_arguments,
         data_collator=data_collator,
         train_dataset=train_dataset,
