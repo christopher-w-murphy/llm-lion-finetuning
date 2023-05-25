@@ -19,26 +19,6 @@ def mock_saving() -> bool:
     return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
 
 
-def format_log_filename_old(log_upload_time: Optional[datetime] = None) -> str:
-    if log_upload_time is None:
-        log_upload_time = datetime.now()
-    return f"log_{log_upload_time.strftime('%Y-%m-%d_%H:%M:%S')}.txt"
-
-
-def upload_log_old(log_sio: StringIO, api: Optional[HfApi] = None):
-    if api is None:
-        api = get_huggingface_hub_connection()
-
-    log_bio = BytesIO(log_sio.getvalue().encode('utf8'))
-
-    api.upload_file(
-        path_or_fileobj=log_bio,
-        path_in_repo=format_log_filename(),
-        repo_id="chriswmurphy/llm-lion-finetuning",
-        repo_type="dataset"
-    )
-
-
 def format_log_filename(upload_time: Optional[datetime] = None) -> str:
     if upload_time is None:
         upload_time = datetime.now()
