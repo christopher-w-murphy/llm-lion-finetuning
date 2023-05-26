@@ -17,8 +17,6 @@ lion_hyperparameters = {
     'betas': (0.95, 0.98)
 }
 
-batch_size: int = 128
-
 
 def get_optimizer(model: PeftModel, optim_name: str) -> Optimizer:
     if optim_name.lower() == 'adamw':
