@@ -26,8 +26,10 @@ def format_log_filename(upload_time: Optional[datetime] = None) -> str:
 
 
 def dicttobytes(dict_obj: Dict[str, Any]) -> BytesIO:
+    # convert a Python dictionary to a JSON string
     sio = StringIO()
     dump(dict_obj, sio)
+    # convert the string to bytes
     return BytesIO(sio.getvalue().encode('utf8'))
 
 
@@ -38,6 +40,6 @@ def upload_log(log_dict: Dict[str, Any], api: Optional[HfApi] = None):
     api.upload_file(
         path_or_fileobj=log_bio,
         path_in_repo=format_log_filename(),
-        repo_id="chriswmurphy/llm-lion-finetuning",
+        repo_id=getenv("SPACE_ID"),  # make the dataset ID the same as the space ID
         repo_type="dataset"
     )
