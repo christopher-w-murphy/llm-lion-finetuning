@@ -123,7 +123,7 @@ def app(config: SessionStateProxy):
 
     # Run predictions.
     predictions, references = list(), list()
-    for sample in tokenized_dataset['test']:
+    for sample in tokenized_dataset['test'].with_format('torch'):
         prediction, reference = evaluate_peft_model(sample, model, tokenizer)
         predictions.append(prediction)
         references.append(reference)
