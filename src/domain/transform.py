@@ -15,7 +15,7 @@ def tokenize_strings(dataset: Dataset, tokenizer: PreTrainedTokenizer, feature: 
     return dataset.map(lambda x: tokenizer(x[feature], truncation=True), batched=True, remove_columns=features)
 
 
-def max_sequence_length(tokenized_strings, ntile: int = 85) -> int:
+def max_sequence_length(tokenized_strings: Dataset, ntile: int = 85) -> int:
     feature_lengths = [len(input_id) for input_id in tokenized_strings["input_ids"]]
     return int(percentile(feature_lengths, ntile))
 
