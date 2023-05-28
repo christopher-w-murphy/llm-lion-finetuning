@@ -1,7 +1,6 @@
 from logging import getLogger, INFO
 from os import getenv
 from time import time
-from typing import Tuple, Dict
 
 from datasets import Dataset
 from huggingface_hub import login, logout
@@ -16,7 +15,7 @@ from src.domain.transform import concatenate_train_test_data, tokenize_strings, 
 from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
-from src.domain.model.evaluation import compute_metrics
+from src.domain.model.evaluation import evaluate_peft_model
 from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log
 
 
@@ -32,7 +31,7 @@ def app(config: SessionStateProxy):
         logger.info(f"streamlit_config - {key}: {val}")
 
     """
-    EL+T
+    Load and prepare the dataset
     """
     log['elt'] = dict()
     log['elt']['start_epoch'] = time()
@@ -73,10 +72,10 @@ def app(config: SessionStateProxy):
         logger.info(f"elt - {key}: {val}")
 
     """
-    Train and Evaluate
+    Fine-Tune T5 with LoRA and bnb int-8
     """
-    log['train_and_eval'] = dict()
-    log['train_and_eval']['start_epoch'] = time()
+    log['train'] = dict()
+    log['train']['start_epoch'] = time()
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
@@ -84,7 +83,7 @@ def app(config: SessionStateProxy):
 
     # Prepare our model for the LoRA int-8 training using peft.
     model = get_lora_model(model)
-    log['train_and_eval']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
+    log['train']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
 
     # Pad our inputs and labels.
     data_collator = get_data_collator(tokenizer, model)
@@ -93,31 +92,48 @@ def app(config: SessionStateProxy):
     output_dir = get_output_dir(config['model_size'], config['optim_name'])
     training_arguments = get_training_arguments(output_dir, config['n_epochs'])
     optimizers = get_optimizers(model, config['optim_name'])
-    rouge = load_rouge_metric()
-
-    def compute_rouge_metric(eval_pred: Tuple[str, str]) -> Dict[str, float]:
-        return compute_metrics(eval_pred, tokenizer, rouge)
 
     trainer = get_trainer(
         model=model,
         data_collator=data_collator,
         train_dataset=tokenized_dataset['train'],
-        eval_dataset=tokenized_dataset['test'],
         training_arguments=training_arguments,
-        optimizers=optimizers,
-        compute_metrics_function=compute_rouge_metric
+        optimizers=optimizers
     )
     model.config.use_cache = False  # silence the warnings.
 
     # Train model.
     trainer.train()
 
-    log['train_and_eval']['trainer_log'] = trainer.state.log_history
-    log['train_and_eval']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
-    log['train_and_eval']['cuda_memory_stats'] = memory_stats()
-    log['train_and_eval']['elasped_time'] = time() - log['train_and_eval']['start_epoch']
-    for key, val in log['train_and_eval'].items():
-        logger.info(f"train_and_eval - {key}: {val}")
+    log['train']['trainer_log'] = trainer.state.log_history
+    log['train']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
+    log['train']['cuda_memory_stats'] = memory_stats()
+    log['train']['elasped_time'] = time() - log['train']['start_epoch']
+    for key, val in log['train'].items():
+        logger.info(f"train - {key}: {val}")
+
+    """
+    Evaluate & run Inference with LoRA FLAN-T5
+    """
+    log['eval'] = dict()
+    log['eval']['start_epoch'] = time()
+
+    # Switch to inference mode.
+    model.eval()
+
+    # Run predictions.
+    predictions, references = list(), list()
+    for sample in tokenized_dataset['test']:
+        prediction, reference = evaluate_peft_model(sample, model, tokenizer)
+        predictions.append(prediction)
+        references.append(reference)
+
+    rouge = load_rouge_metric()
+    log['eval']['results'] = rouge.compute(predictions=predictions, references=references, use_stemmer=True)
+
+    log['eval']['elasped_time'] = time() - log['train']['start_epoch']
+    for key, val in log['eval'].items():
+        logger.info(f"eval - {key}: {val}")
 
     # Save our model and upload the log.
     if not mock_saving():

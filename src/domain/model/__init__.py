@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Callable
+from typing import Dict, Tuple
 
 from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
@@ -44,9 +44,8 @@ def get_training_arguments(output_dir: str, n_epochs: int) -> Seq2SeqTrainingArg
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
         num_train_epochs=n_epochs,
-        evaluation_strategy="epoch",
-        predict_with_generate=True,
         auto_find_batch_size=True,
+        logging_strategy="epoch"
     )
 
 
@@ -54,19 +53,15 @@ def get_trainer(
         model: PeftModelForSeq2SeqLM,
         data_collator: DataCollatorForSeq2Seq,
         train_dataset: Dataset,
-        eval_dataset: Dataset,
         training_arguments: Seq2SeqTrainingArguments,
-        optimizers: Tuple[Optimizer, LambdaLR],
-        compute_metrics_function: Callable
+        optimizers: Tuple[Optimizer, LambdaLR]
 ) -> Seq2SeqTrainer:
     return Seq2SeqTrainer(
         model=model,
         args=training_arguments,
         data_collator=data_collator,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        optimizers=optimizers,
-        compute_metrics=compute_metrics_function
+        optimizers=optimizers
     )
 
 
