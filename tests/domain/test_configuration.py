@@ -1,4 +1,4 @@
-import pytest
+from pytest import raises
 
 from src.domain.configuration import get_base_model_id, get_tokenizer_id, get_output_dir
 
@@ -6,14 +6,14 @@ from src.domain.configuration import get_base_model_id, get_tokenizer_id, get_ou
 def test_get_base_model_id():
     result = get_base_model_id('XXL')
     assert result == "philschmid/flan-t5-xxl-sharded-fp16"
-    with pytest.raises(ValueError):
+    with raises(ValueError):
         get_base_model_id('large')
 
 
 def test_get_tokenizer_id():
     result = get_tokenizer_id('Small')
     assert result == "google/flan-t5-small"
-    with pytest.raises(ValueError):
+    with raises(ValueError):
         get_tokenizer_id('large')
 
 
