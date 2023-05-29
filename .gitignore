@@ -1,3 +1,14 @@
-.idea/
-venv/
+# Secrets
 .streamlit/secrets.toml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Environments
+venv/
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
