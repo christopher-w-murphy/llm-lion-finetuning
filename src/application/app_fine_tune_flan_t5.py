@@ -4,6 +4,7 @@ from time import time
 
 from datasets import Dataset
 from huggingface_hub import login, logout
+from streamlit import progress
 from streamlit.runtime.state import SessionStateProxy
 from torch.cuda import memory_stats
 from transformers import BatchEncoding
@@ -123,15 +124,18 @@ def app(config: SessionStateProxy):
 
     # Run predictions.
     predictions, references = list(), list()
-    for sample in tokenized_dataset['test'].with_format('torch'):
+    test_dataset = tokenized_dataset['test'].with_format('torch')
+    progress_bar = progress(0., text='Evaluation Progress')  # Streamlit animation
+    for idx, sample in enumerate(test_dataset):
         prediction, reference = evaluate_peft_model(sample, model, tokenizer)
         predictions.append(prediction)
         references.append(reference)
+        progress_bar.progress((idx + 1.) / log['elt']['test_dataset_size'], text='Evaluation Progress')
 
     rouge = load_rouge_metric()
     log['eval']['results'] = rouge.compute(predictions=predictions, references=references, use_stemmer=True)
 
-    log['eval']['elasped_time'] = time() - log['train']['start_epoch']
+    log['eval']['elasped_time'] = time() - log['eval']['start_epoch']
     for key, val in log['eval'].items():
         logger.info(f"eval - {key}: {val}")
 
