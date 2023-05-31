@@ -111,6 +111,7 @@ def app(config: SessionStateProxy):
     log['train']['trainer_log'] = trainer.state.log_history
     log['train']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
     log['train']['cuda_memory_stats'] = memory_stats()
+    log['train']['train_batch_size'] = trainer.args.train_batch_size
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
     for key, val in log['train'].items():
         logger.info(f"train - {key}: {val}")
