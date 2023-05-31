@@ -20,5 +20,9 @@ def get_tokenizer_id(model_size: str) -> str:
         raise ValueError('Invalid model size.')
 
 
+def process_optim_name(optim_name: str) -> str:
+    return optim_name.replace(' ', '').replace('-', '').lower()
+
+
 def get_output_dir(model_size: str, optim_name: str) -> str:
-    return f"lora-flan-t5-{model_size.lower()}-{optim_name.lower()}"
+    return f"lora-flan-t5-{model_size.lower()}-{process_optim_name(optim_name)}"

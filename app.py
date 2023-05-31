@@ -23,7 +23,7 @@ def main():
     with form("Configuration"):
         selectbox(
             "Select Optimizer",
-            ["AdamW", "Lion"],
+            ["AdamW 32-bit", "AdamW 8-bit", "Lion 32-bit"],
             key="optim_name",
             help="AdamW is the default optimzer for training transformer models. "
                  "Lion is the optimizer we wish to test."
