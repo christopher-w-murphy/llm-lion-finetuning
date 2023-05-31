@@ -13,6 +13,7 @@ from src.infrastructure.datasets import load_samsum_dataset
 from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
 from src.infrastructure.transformers import load_tokenizer, load_base_model
 from src.domain.transform import concatenate_train_test_data, tokenize_strings, max_sequence_length, preprocess_function
+from src.infrastructure.torch import verify_torch_installation
 from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
@@ -77,6 +78,7 @@ def app(config: SessionStateProxy):
     """
     log['train'] = dict()
     log['train']['start_epoch'] = time()
+    log['train']['verify_torch_installation'] = verify_torch_installation()
 
     # Load the base model.
     base_model_id = get_base_model_id(config['model_size'])
