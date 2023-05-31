@@ -1,16 +1,16 @@
-peft==0.3.0
-transformers==4.29.2
-datasets==2.12.0
-accelerate==0.19.0
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch==2.0.1
+peft==0.2.0
+transformers==4.27.2
+datasets==2.9.0
+accelerate==0.17.1
 evaluate==0.4.0
-bitsandbytes==0.39.0
+bitsandbytes==0.37.1
 huggingface_hub==0.14.1
 numpy==1.24.3
 py7zr==0.20.5
 rouge-score==0.1.2
+lion-pytorch==0.1.2
 streamlit==1.19.0
 altair<5
 pytest==7.3.1
-scipy==1.10.1
---extra-index-url https://download.pytorch.org/whl/cu113
-torch==2.0.1

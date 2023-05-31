@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 from datasets import Dataset
 from peft import LoraConfig, TaskType, prepare_model_for_int8_training, PeftModelForSeq2SeqLM
@@ -65,7 +65,7 @@ def get_trainer(
     )
 
 
-def summarize_trainable_parameters(model: PeftModelForSeq2SeqLM) -> Dict[str, int]:
+def summarize_trainable_parameters(model: PeftModelForSeq2SeqLM) -> Dict[str, Union[int, float]]:
     """
     Counts the number of trainable parameters in the model.
     """
