@@ -2,6 +2,7 @@ from datetime import datetime
 from io import BytesIO, StringIO
 from json import dump
 from os import getenv
+from pathlib import Path
 from typing import Optional, Dict, Any
 
 from huggingface_hub import HfApi
@@ -33,13 +34,23 @@ def dicttobytes(dict_obj: Dict[str, Any]) -> BytesIO:
     return BytesIO(sio.getvalue().encode('utf8'))
 
 
-def upload_log(log_dict: Dict[str, Any], api: Optional[HfApi] = None):
+def upload_log(log_dict: Dict[str, Any], api: Optional[HfApi] = None, upload_time: Optional[datetime] = None):
     log_bio = dicttobytes(log_dict)
+
     if api is None:
         api = get_huggingface_hub_connection()
+
+    repo_id = getenv("SPACE_ID")  # make the dataset ID the same as the space ID
+    api.create_repo(repo_id=repo_id, exist_ok=True)
     api.upload_file(
         path_or_fileobj=log_bio,
-        path_in_repo=format_log_filename(),
-        repo_id=getenv("SPACE_ID"),  # make the dataset ID the same as the space ID
+        path_in_repo=format_log_filename(upload_time),
+        repo_id=repo_id,
         repo_type="dataset"
     )
+
+
+def save_log(log_dict: Dict[str, Any], output_dir: str, upload_time: Optional[datetime] = None):
+    filepath = Path.cwd() / output_dir / format_log_filename(upload_time)
+    with filepath.open('w') as fp:
+        dump(log_dict, fp)
