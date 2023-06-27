@@ -17,7 +17,7 @@ from src.domain.model import get_lora_model, summarize_trainable_parameters, get
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import evaluate_peft_model
-from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log
+from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log, save_log
 
 
 logger = getLogger(__name__)
@@ -142,11 +142,16 @@ def app(config: Union[SessionStateProxy, Dict[str, Any]]):
     for key, val in log['eval'].items():
         logger.info(f"eval - {key}: {val}")
 
-    # Save our model and upload the log.
+    # Save our model to the hub and upload the log as well.
     if not mock_saving():
         token = getenv('HUGGINGFACE_TOKEN')
-        login(token=token)
-        trainer.model.push_to_hub(output_dir)
-        api = get_huggingface_hub_connection(token=token)
-        upload_log(log, api)
-        logout()
+        try:
+            login(token=token)
+            trainer.model.push_to_hub(output_dir)
+            api = get_huggingface_hub_connection(token=token)
+            upload_log(log, api)
+        except ValueError as e:
+            logger.warning(f'Likely a missing or invalid token. Writing log to disk instead. {e}')
+            save_log(log, output_dir)
+        finally:
+            logout()
