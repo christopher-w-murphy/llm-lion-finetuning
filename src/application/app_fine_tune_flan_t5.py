@@ -110,6 +110,16 @@ def app(config: Dict[str, Any]):
     for key, val in log['train'].items():
         print(f"train - {key}: {val}")
 
+    # Save our model to the hub
+    token = getenv('HUGGINGFACE_TOKEN')
+    if not mock_saving():
+        try:
+            login(token=token)
+            trainer.model.push_to_hub(output_dir)
+        except ValueError as e:
+            warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
+            trainer.model.save_pretrained(output_dir)
+
     """
     Evaluate & run Inference with LoRA FLAN-T5
     """
@@ -137,16 +147,13 @@ def app(config: Dict[str, Any]):
     for key, val in log['eval'].items():
         print(f"eval - {key}: {val}")
 
-    # Save our model to the hub and upload the log as well.
+    # Upload the log to the hub.
     if not mock_saving():
-        token = getenv('HUGGINGFACE_TOKEN')
         try:
-            login(token=token)
-            trainer.model.push_to_hub(output_dir)
             api = get_huggingface_hub_connection(token=token)
             upload_log(log, api)
         except ValueError as e:
-            warn(f'Huggingface token missing or invalid. Writing log to disk instead. {e}', UserWarning)
+            warn(f"Unable to upload log likely due to a missing or invalid token. Writing log to disk instead. {e}", UserWarning)
             save_log(log, output_dir)
         finally:
             logout()
