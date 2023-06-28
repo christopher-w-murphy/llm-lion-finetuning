@@ -97,6 +97,8 @@ def app(config: Dict[str, Any]):
         training_arguments=training_arguments,
         optimizers=optimizers
     )
+    if 'limit_samples' in config and config['limit_samples']:
+        trainer.args.per_device_train_batch_size = limited_samples_count
     model.config.use_cache = False  # silence the warnings.
 
     # Train model.
