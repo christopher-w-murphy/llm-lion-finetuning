@@ -1,12 +1,11 @@
-# Secrets
-.streamlit/secrets.toml
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
 # Environments
 venv/
+
 .env
+.streamlit/secrets.toml
 
 # PyCharm
 .idea/
