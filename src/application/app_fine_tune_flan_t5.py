@@ -1,11 +1,10 @@
-from logging import getLogger, INFO
 from os import getenv
 from time import time
-from typing import Union, Dict, Any
+from typing import Dict, Any
+from warnings import warn
 
 from datasets import Dataset
 from huggingface_hub import login, logout
-from streamlit.runtime.state import SessionStateProxy
 from transformers import BatchEncoding
 
 from src.infrastructure.datasets import load_samsum_dataset
@@ -20,16 +19,12 @@ from src.domain.model.evaluation import evaluate_peft_model
 from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log, save_log
 
 
-logger = getLogger(__name__)
-logger.setLevel(INFO)
-
-
-def app(config: Union[SessionStateProxy, Dict[str, Any]]):
+def app(config: Dict[str, Any]):
     # Log the configuration.
     log = dict()
     log['config'] = {key: val for key, val in config.items()}
     for key, val in log['config'].items():
-        logger.info(f"config - {key}: {val}")
+        print(f"config - {key}: {val}")
 
     """
     Load and prepare the dataset
@@ -70,7 +65,7 @@ def app(config: Union[SessionStateProxy, Dict[str, Any]]):
 
     log['elt']['elasped_time'] = time() - log['elt']['start_epoch']
     for key, val in log['elt'].items():
-        logger.info(f"elt - {key}: {val}")
+        print(f"elt - {key}: {val}")
 
     """
     Fine-Tune T5 with LoRA and bnb int-8
@@ -113,7 +108,17 @@ def app(config: Union[SessionStateProxy, Dict[str, Any]]):
     log['train']['train_batch_size'] = trainer.args.train_batch_size
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
     for key, val in log['train'].items():
-        logger.info(f"train - {key}: {val}")
+        print(f"train - {key}: {val}")
+
+    # Save our model to the hub
+    token = getenv('HUGGINGFACE_TOKEN')
+    if not mock_saving():
+        try:
+            login(token=token)
+            trainer.model.push_to_hub(output_dir)
+        except ValueError as e:
+            warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
+            trainer.model.save_pretrained(output_dir)
 
     """
     Evaluate & run Inference with LoRA FLAN-T5
@@ -133,25 +138,22 @@ def app(config: Union[SessionStateProxy, Dict[str, Any]]):
         predictions.append(prediction)
         references.append(reference)
         if idx % 10 == 0 or idx in (1, log['elt']['test_dataset_size']):
-            logger.info(log_eval_step(idx, log['elt']['test_dataset_size'], time() - iter_start_time))
+            print(log_eval_step(idx, log['elt']['test_dataset_size'], time() - iter_start_time))
 
     rouge = load_rouge_metric()
     log['eval']['results'] = rouge.compute(predictions=predictions, references=references, use_stemmer=True)
 
     log['eval']['elasped_time'] = time() - log['eval']['start_epoch']
     for key, val in log['eval'].items():
-        logger.info(f"eval - {key}: {val}")
+        print(f"eval - {key}: {val}")
 
-    # Save our model to the hub and upload the log as well.
+    # Upload the log to the hub.
     if not mock_saving():
-        token = getenv('HUGGINGFACE_TOKEN')
         try:
-            login(token=token)
-            trainer.model.push_to_hub(output_dir)
             api = get_huggingface_hub_connection(token=token)
             upload_log(log, api)
         except ValueError as e:
-            logger.warning(f'Likely a missing or invalid token. Writing log to disk instead. {e}')
+            warn(f"Unable to upload log likely due to a missing or invalid token. Writing log to disk instead. {e}", UserWarning)
             save_log(log, output_dir)
         finally:
             logout()
