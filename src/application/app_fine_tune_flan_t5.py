@@ -34,11 +34,6 @@ def app(config: Dict[str, Any]):
 
     # Load the `samsum` dataset.
     dataset = load_samsum_dataset()
-
-    if 'limit_samples' in config and config['limit_samples']:
-        for dataset_name in dataset:
-            dataset[dataset_name] = dataset[dataset_name].select(range(limited_samples_count))
-
     log['elt']['train_dataset_size'] = len(dataset['train'])
     log['elt']['test_dataset_size'] = len(dataset['test'])
 
@@ -97,8 +92,6 @@ def app(config: Dict[str, Any]):
         training_arguments=training_arguments,
         optimizers=optimizers
     )
-    if 'limit_samples' in config and config['limit_samples']:
-        trainer.args.per_device_train_batch_size = limited_samples_count
     model.config.use_cache = False  # silence the warnings.
 
     # Train model.
@@ -139,8 +132,10 @@ def app(config: Dict[str, Any]):
         prediction, reference = evaluate_peft_model(sample, model, tokenizer)
         predictions.append(prediction)
         references.append(reference)
-        if idx % 10 == 0 or idx in (1, log['elt']['test_dataset_size']):
+        if idx % 10 == 0 or idx in (1, limited_samples_count, log['elt']['test_dataset_size']):
             print(log_eval_step(idx, log['elt']['test_dataset_size'], time() - iter_start_time))
+        if 'limit_samples' in config and config['limit_samples'] and idx == limited_samples_count:
+            break
 
     rouge = load_rouge_metric()
     log['eval']['results'] = rouge.compute(predictions=predictions, references=references, use_stemmer=True)

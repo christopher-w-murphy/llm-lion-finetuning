@@ -12,6 +12,7 @@ from streamlit import (
 )
 
 from src.application.app_fine_tune_flan_t5 import app
+from src.domain.configuration import limited_samples_count
 
 
 def main():
@@ -43,9 +44,9 @@ def main():
             help="Adjust the number of fine-tuning training epochs."
         )
         checkbox(
-            "Limit Number of Samples?",
+            "Limit Number of Eval Samples?",
             key="limit_samples",
-            help="If selected, use only the first 2 samples from the train and test datasets. "
+            help=f"If selected, use only the first {limited_samples_count} samples from and test dataset. "
                  "Useful for testing the pipeline."
         )
         run = form_submit_button("Submit Run")
