@@ -3,15 +3,16 @@ from os import getenv
 
 from dotenv import load_dotenv
 
+from src.infrastructure.utilities import strtobool
 from src.application.app_fine_tune_flan_t5 import app
 
 
 def get_parser():
     parser = ArgumentParser()
-    parser.add_argument("optim_name", type=str, choices=["AdamW 32-bit", "AdamW 8-bit", "Lion 32-bit"], default="AdamW 32-bit")
-    parser.add_argument("model_size", type=str, choices=["Small", "XXL"], default="Small")
-    parser.add_argument("n_epochs", type=int, default=5)
-    parser.add_argument("limit_samples", type=bool, default=False)
+    parser.add_argument("--optim_name", dest="optim_name", type=str, choices=["AdamW 32-bit", "AdamW 8-bit", "Lion 32-bit"], default="AdamW 32-bit")
+    parser.add_argument("--model_size", dest="model_size", type=str, choices=["Small", "XXL"], default="Small")
+    parser.add_argument("--n_epochs", dest="n_epochs", type=int, default=5)
+    parser.add_argument("--limit_samples", dest="limit_samples", type=strtobool, default=False)
     return parser
 
 

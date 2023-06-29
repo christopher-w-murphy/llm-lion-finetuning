@@ -1,3 +1,6 @@
+from os import getenv
+
+
 def strtobool(val: str) -> bool:
     """
     Convert a string representation of truth to true or false.
@@ -9,3 +12,11 @@ def strtobool(val: str) -> bool:
         return False
     else:
         raise ValueError(f"invalid truth value {val}.")
+
+
+def mock_saving() -> bool:
+    return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
+
+
+def eval_only() -> bool:
+    return getenv('EVAL_ONLY') is not None and strtobool(getenv('EVAL_ONLY'))
