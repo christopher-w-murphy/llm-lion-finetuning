@@ -16,7 +16,9 @@ from src.domain.model import get_lora_model, summarize_trainable_parameters, get
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import evaluate_peft_model
-from src.infrastructure.huggingface_hub import mock_saving, get_huggingface_hub_connection, upload_log, save_log
+from src.infrastructure.huggingface_hub import get_huggingface_hub_connection, upload_log, save_log
+from src.infrastructure.peft import load_peft_model
+from src.infrastructure.utilities import mock_saving, eval_only
 
 
 def app(config: Dict[str, Any]):
@@ -73,47 +75,54 @@ def app(config: Dict[str, Any]):
     base_model_id = get_base_model_id(config['model_size'])
     model = load_base_model(base_model_id)
 
-    # Prepare our model for the LoRA int-8 training using peft.
-    model = get_lora_model(model)
-    log['train']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
-
-    # Pad our inputs and labels.
-    data_collator = get_data_collator(tokenizer, model)
-
-    # Create Trainer instance.
+    # Prepare for preserving results.
     output_dir = get_output_dir(config['model_size'], config['optim_name'])
-    training_arguments = get_training_arguments(output_dir, config['n_epochs'])
-    optimizers = get_optimizers(model, config['optim_name'])
+    token = getenv('HUGGINGFACE_TOKEN')
 
-    trainer = get_trainer(
-        model=model,
-        data_collator=data_collator,
-        train_dataset=tokenized_dataset['train'],
-        training_arguments=training_arguments,
-        optimizers=optimizers
-    )
-    model.config.use_cache = False  # silence the warnings.
+    # Either load a pre-finetuned model or finetune a model.
+    if eval_only():
+        model = load_peft_model(model, output_dir)
+    else:
+        # Prepare our model for the LoRA int-8 training using peft.
+        model = get_lora_model(model)
+        log['train']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
 
-    # Train model.
-    trainer.train()
+        # Pad our inputs and labels.
+        data_collator = get_data_collator(tokenizer, model)
 
-    log['train']['trainer_log'] = trainer.state.log_history
-    log['train']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
-    log['train']['cuda_memory_stats'] = get_memory_stats()
-    log['train']['train_batch_size'] = trainer.args.train_batch_size
+        # Create Trainer instance.
+        training_arguments = get_training_arguments(output_dir, config['n_epochs'])
+        optimizers = get_optimizers(model, config['optim_name'])
+
+        trainer = get_trainer(
+            model=model,
+            data_collator=data_collator,
+            train_dataset=tokenized_dataset['train'],
+            training_arguments=training_arguments,
+            optimizers=optimizers
+        )
+        model.config.use_cache = False  # silence the warnings.
+
+        # Train model.
+        trainer.train()
+
+        log['train']['trainer_log'] = trainer.state.log_history
+        log['train']['model_memory_footprint'] = trainer.model.get_memory_footprint(return_buffers=False)
+        log['train']['cuda_memory_stats'] = get_memory_stats()
+        log['train']['train_batch_size'] = trainer.args.train_batch_size
+
+        # Save our model to the hub
+        if not mock_saving():
+            try:
+                login(token=token)
+                trainer.model.push_to_hub(output_dir)
+            except ValueError as e:
+                warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
+                trainer.model.save_pretrained(output_dir)
+
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
     for key, val in log['train'].items():
         print(f"train - {key}: {val}")
-
-    # Save our model to the hub
-    token = getenv('HUGGINGFACE_TOKEN')
-    if not mock_saving():
-        try:
-            login(token=token)
-            trainer.model.push_to_hub(output_dir)
-        except ValueError as e:
-            warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
-            trainer.model.save_pretrained(output_dir)
 
     """
     Evaluate & run Inference with LoRA FLAN-T5
