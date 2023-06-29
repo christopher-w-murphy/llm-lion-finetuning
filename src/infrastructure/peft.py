@@ -9,6 +9,6 @@ def load_peft_model(base_model: PreTrainedModel, output_dir: str) -> PeftModelFo
     """
     output_path = Path.cwd() / output_dir
     if output_path.exists():
-        return PeftModel.from_pretrained(base_model, output_path)
+        return PeftModel.from_pretrained(base_model, output_path, device_map={"": 0})
     else:
-        return PeftModel.from_pretrained(base_model, output_dir)
+        return PeftModel.from_pretrained(base_model, output_dir, device_map={"": 0})
