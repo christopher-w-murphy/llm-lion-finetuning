@@ -86,7 +86,3 @@ def summarize_trainable_parameters(model: PeftModelForSeq2SeqLM) -> Dict[str, Un
         'all_params': all_params,
         'trainable_params_pct': trainable_params / all_params
     }
-
-
-def log_eval_step(idx: int, test_dataset_size: int, time_taken: float) -> str:
-    return f"Evaluation is {idx}/{test_dataset_size} = {100 * idx / test_dataset_size:.0f}% complete. Time taken for sample {idx} = {time_taken:.2f} s."

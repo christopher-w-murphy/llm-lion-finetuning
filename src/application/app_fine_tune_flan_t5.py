@@ -5,6 +5,7 @@ from warnings import warn
 
 from datasets import Dataset
 from huggingface_hub import login, logout
+from tqdm import tqdm
 from transformers import BatchEncoding
 
 from src.infrastructure.datasets import load_samsum_dataset
@@ -12,7 +13,7 @@ from src.domain.configuration import limited_samples_count, get_tokenizer_id, ge
 from src.infrastructure.transformers import load_tokenizer, load_base_model
 from src.domain.transform import concatenate_train_test_data, tokenize_strings, max_sequence_length, preprocess_function
 from src.infrastructure.torch import verify_torch_installation, get_memory_stats
-from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer, log_eval_step
+from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import evaluate_peft_model
@@ -136,13 +137,10 @@ def app(config: Dict[str, Any]):
     # Run predictions.
     predictions, references = list(), list()
     test_dataset = tokenized_dataset['test'].with_format('torch')
-    for idx, sample in enumerate(test_dataset, start=1):
-        iter_start_time = time()
+    for idx, sample in enumerate(tqdm(test_dataset), start=1):
         prediction, reference = evaluate_peft_model(sample, model, tokenizer)
         predictions.append(prediction)
         references.append(reference)
-        if idx % 10 == 0 or idx in (1, limited_samples_count, log['elt']['test_dataset_size']):
-            print(log_eval_step(idx, log['elt']['test_dataset_size'], time() - iter_start_time))
         if 'limit_samples' in config and config['limit_samples'] and idx == limited_samples_count:
             break
 
