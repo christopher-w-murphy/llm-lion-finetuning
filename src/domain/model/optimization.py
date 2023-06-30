@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from bitsandbytes.optim import AdamW8bit
 from lion_pytorch.lion_pytorch import Lion
@@ -33,7 +33,13 @@ def get_optimizer(model: PeftModelForSeq2SeqLM, optim_name: str) -> Optimizer:
         raise ValueError(f"Invalid optimizer name: {optim_name}.")
 
 
-def get_optimizers(model: PeftModelForSeq2SeqLM, optim_name: str) -> Tuple[Optimizer, LambdaLR]:
+def get_optimizers(model: PeftModelForSeq2SeqLM,
+                   optim_name: str,
+                   use_constant_schedule: Optional[bool] = None
+                   ) -> Tuple[Optimizer, Optional[LambdaLR]]:
     optimizer = get_optimizer(model, optim_name)
-    lr_scheduler = get_constant_schedule(optimizer)
+    if use_constant_schedule is not None and use_constant_schedule:
+        lr_scheduler = get_constant_schedule(optimizer)
+    else:
+        lr_scheduler = None
     return optimizer, lr_scheduler
