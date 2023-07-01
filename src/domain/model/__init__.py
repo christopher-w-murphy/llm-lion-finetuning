@@ -44,9 +44,9 @@ def get_training_arguments(output_dir: str, n_epochs: int) -> Seq2SeqTrainingArg
     return Seq2SeqTrainingArguments(
         output_dir=output_dir,
         num_train_epochs=n_epochs,
-        auto_find_batch_size=True,
-        per_device_train_batch_size=128,
-        logging_strategy="epoch",
+        per_device_train_batch_size=8,
+        logging_strategy="steps",
+        logging_steps=500,
         logging_first_step=True,
         save_strategy="no"
     )

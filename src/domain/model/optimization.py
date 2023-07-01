@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple
 
 from bitsandbytes.optim import AdamW8bit
 from lion_pytorch.lion_pytorch import Lion
@@ -10,13 +10,14 @@ from transformers.optimization import get_constant_schedule
 from src.domain.configuration import process_optim_name
 
 
+# Hyperparameters from 2302.06675 table 12
 adamw_hyperparameters = {
-    'lr': 1e-3,  # higher learning rate
+    'lr': 3e-5,
     'betas': (0.9, 0.99)
 }
 
 lion_hyperparameters = {
-    'lr': 1e-4,  # order of magnitude smaller than Adam
+    'lr': 3e-6,
     'betas': (0.95, 0.98)
 }
 
@@ -33,13 +34,7 @@ def get_optimizer(model: PeftModelForSeq2SeqLM, optim_name: str) -> Optimizer:
         raise ValueError(f"Invalid optimizer name: {optim_name}.")
 
 
-def get_optimizers(model: PeftModelForSeq2SeqLM,
-                   optim_name: str,
-                   use_constant_schedule: Optional[bool] = None
-                   ) -> Tuple[Optimizer, Optional[LambdaLR]]:
+def get_optimizers(model: PeftModelForSeq2SeqLM, optim_name: str) -> Tuple[Optimizer, LambdaLR]:
     optimizer = get_optimizer(model, optim_name)
-    if use_constant_schedule is not None and use_constant_schedule:
-        lr_scheduler = get_constant_schedule(optimizer)
-    else:
-        lr_scheduler = None
+    lr_scheduler = get_constant_schedule(optimizer)
     return optimizer, lr_scheduler
