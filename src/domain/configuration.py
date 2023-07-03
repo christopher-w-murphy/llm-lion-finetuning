@@ -1,5 +1,10 @@
+from typing import Set
+
+
 label_pad_token_id: int = -100
 limited_samples_count: int = 2
+optim_names: Set[str] = {"AdamW 32-bit", "AdamW 8-bit", "Lion 32-bit", "Lion 8-bit"}
+model_sizes: Set[str] = {"Small", "XXL"}
 
 
 def get_base_model_id(model_size: str) -> str:
