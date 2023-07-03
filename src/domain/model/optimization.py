@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from bitsandbytes.optim import AdamW8bit
+from bitsandbytes.optim import AdamW8bit, Lion8bit
 from lion_pytorch.lion_pytorch import Lion
 from peft import PeftModelForSeq2SeqLM
 from torch.optim import AdamW, Optimizer
@@ -30,6 +30,8 @@ def get_optimizer(model: PeftModelForSeq2SeqLM, optim_name: str) -> Optimizer:
         return AdamW8bit(model.parameters(), **adamw_hyperparameters)
     elif optim_name == 'lion32bit':
         return Lion(model.parameters(), **lion_hyperparameters)
+    elif optim_name == 'lion8bit':
+        return Lion8bit(model.parameters(), **lion_hyperparameters)
     else:
         raise ValueError(f"Invalid optimizer name: {optim_name}.")
 

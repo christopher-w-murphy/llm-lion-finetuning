@@ -12,7 +12,7 @@ from streamlit import (
 )
 
 from src.application.app_fine_tune_flan_t5 import app
-from src.domain.configuration import limited_samples_count
+from src.domain.configuration import limited_samples_count, model_sizes, optim_names
 
 
 def main():
@@ -24,14 +24,14 @@ def main():
     with form("Configuration"):
         selectbox(
             "Select Optimizer",
-            ["AdamW 32-bit", "AdamW 8-bit", "Lion 32-bit"],
+            optim_names,
             key="optim_name",
             help="AdamW is the default optimzer for training transformer models. "
                  "Lion is the optimizer we wish to test."
         )
         selectbox(
             "Select FLAN-T5 model size",
-            ["Small", "XXL"],
+            model_sizes,
             key="model_size",
             help="Fine-tune an 80M param model, or fine-tune an 11B param model."
         )
