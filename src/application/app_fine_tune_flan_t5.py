@@ -12,7 +12,7 @@ from src.infrastructure.datasets import load_samsum_dataset
 from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
 from src.infrastructure.transformers import load_tokenizer, load_base_model
 from src.domain.transform import concatenate_train_test_data, tokenize_strings, max_sequence_length, preprocess_function
-from src.infrastructure.torch import verify_torch_installation, get_memory_stats, manage_cuda_cache, set_cuda_config
+from src.infrastructure.torch import verify_torch_installation, get_memory_stats
 from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
@@ -84,8 +84,6 @@ def app(config: Dict[str, Any]):
     if eval_only():
         model = load_peft_model(model, output_dir)
     else:
-        # set_cuda_config(config['optim_name'])
-
         # Prepare our model for the LoRA int-8 training using peft.
         model = get_lora_model(model)
         log['train']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
@@ -114,16 +112,14 @@ def app(config: Dict[str, Any]):
         log['train']['cuda_memory_stats'] = get_memory_stats()
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
-        # manage_cuda_cache(config['optim_name'])
-
         # Save our model to the hub
-        if not mock_saving():
+        if mock_saving():
             try:
                 login(token=token)
-                trainer.model.push_to_hub(output_dir)  # requires 40 MiB of GPU RAM, at least for Lion 8-bit
-            except (ValueError, RuntimeError) as e:
+                trainer.model.push_to_hub(output_dir)
+            except ValueError as e:
                 warn(f"Unable to upload model due to, {e}. Trying to write model to disk instead.", UserWarning)
-                trainer.model.save_pretrained(output_dir)  # requires 16 MiB of GPU RAM, at least for Lion 8-bit
+                trainer.model.save_pretrained(output_dir)
 
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
     for key, val in log['train'].items():
@@ -162,7 +158,7 @@ def app(config: Dict[str, Any]):
             api = get_huggingface_hub_connection(token=token)
             upload_log(log, api)
         except ValueError as e:
-            warn(f"Unable to upload log likely due to a missing or invalid token. Writing log to disk instead. {e}", UserWarning)
+            warn(f"Unable to upload log due to, {e}. Trying to write log to disk instead.", UserWarning)
             save_log(log, output_dir)
         finally:
             logout()

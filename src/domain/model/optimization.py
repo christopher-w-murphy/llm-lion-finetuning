@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from bitsandbytes.optim import AdamW8bit
+from bitsandbytes.optim import AdamW8bit, Lion8bit
 from lion_pytorch.lion_pytorch import Lion
 from peft import PeftModelForSeq2SeqLM
 from torch.optim import AdamW, Optimizer
@@ -8,7 +8,6 @@ from torch.optim.lr_scheduler import LambdaLR
 from transformers.optimization import get_constant_schedule
 
 from src.domain.configuration import process_optim_name
-from src.domain.model.optimization.lion import Lion8bit
 
 
 # Hyperparameters from 2302.06675 table 12
