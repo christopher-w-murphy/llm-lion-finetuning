@@ -84,7 +84,7 @@ def app(config: Dict[str, Any]):
     if eval_only():
         model = load_peft_model(model, output_dir)
     else:
-        set_cuda_config(config['optim_name'])
+        # set_cuda_config(config['optim_name'])
 
         # Prepare our model for the LoRA int-8 training using peft.
         model = get_lora_model(model)
@@ -114,7 +114,7 @@ def app(config: Dict[str, Any]):
         log['train']['cuda_memory_stats'] = get_memory_stats()
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
-        manage_cuda_cache(config['optim_name'])
+        # manage_cuda_cache(config['optim_name'])
 
         # Save our model to the hub
         if not mock_saving():
