@@ -116,15 +116,16 @@ def app(config: Dict[str, Any]):
         log['train']['cuda_memory_stats'] = get_memory_stats()
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
-        empty_cache()
+        if config['optim_name'] == "Lion 8-bit":
+            empty_cache()
 
         # Save our model to the hub
         if not mock_saving():
             try:
                 login(token=token)
                 trainer.model.push_to_hub(output_dir)
-            except ValueError as e:
-                warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
+            except (ValueError, RuntimeError) as e:
+                warn(f"Unable to upload model due to, {e}. Trying to write model to disk instead.", UserWarning)
                 trainer.model.save_pretrained(output_dir)
 
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
