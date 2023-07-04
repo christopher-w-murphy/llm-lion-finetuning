@@ -5,15 +5,14 @@ from warnings import warn
 
 from datasets import Dataset
 from huggingface_hub import login, logout
-from torch.cuda import empty_cache
 from tqdm import tqdm
 from transformers import BatchEncoding
 
 from src.infrastructure.datasets import load_samsum_dataset
-from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir
+from src.domain.configuration import limited_samples_count, get_tokenizer_id, get_base_model_id, get_output_dir, memory_needed_to_push_to_hub
 from src.infrastructure.transformers import load_tokenizer, load_base_model
 from src.domain.transform import concatenate_train_test_data, tokenize_strings, max_sequence_length, preprocess_function
-from src.infrastructure.torch import verify_torch_installation, get_memory_stats
+from src.infrastructure.torch import verify_torch_installation, get_memory_stats, empty_cache_if_free_memory_is_low
 from src.domain.model import get_lora_model, summarize_trainable_parameters, get_data_collator, get_training_arguments, get_trainer
 from src.domain.model.optimization import get_optimizers
 from src.infrastructure.evaluate import load_rouge_metric
@@ -116,15 +115,15 @@ def app(config: Dict[str, Any]):
         log['train']['cuda_memory_stats'] = get_memory_stats()
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
-        empty_cache()
+        empty_cache_if_free_memory_is_low(memory_needed_to_push_to_hub)
 
         # Save our model to the hub
         if not mock_saving():
             try:
                 login(token=token)
                 trainer.model.push_to_hub(output_dir)
-            except ValueError as e:
-                warn(f"Unable to upload model likely due to a missing or invalid token. Writing model to disk instead. {e}", UserWarning)
+            except (ValueError, RuntimeError) as e:
+                warn(f"Unable to upload model due to, {e}. Trying to write model to disk instead.", UserWarning)
                 trainer.model.save_pretrained(output_dir)
 
     log['train']['elasped_time'] = time() - log['train']['start_epoch']
