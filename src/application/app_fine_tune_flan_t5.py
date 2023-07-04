@@ -1,4 +1,4 @@
-from os import getenv
+from os import getenv, environ
 from time import time
 from typing import Dict, Any
 from warnings import warn
@@ -85,6 +85,9 @@ def app(config: Dict[str, Any]):
     if eval_only():
         model = load_peft_model(model, output_dir)
     else:
+        if config['optim_name'] == "Lion 8-bit":
+            environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
         # Prepare our model for the LoRA int-8 training using peft.
         model = get_lora_model(model)
         log['train']['trainable_parameters_summary'] = summarize_trainable_parameters(model)
