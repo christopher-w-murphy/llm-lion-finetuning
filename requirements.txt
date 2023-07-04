@@ -4,7 +4,7 @@ transformers==4.27.2
 datasets==2.9.0
 accelerate==0.17.1
 evaluate==0.4.0
-bitsandbytes==0.38.1
+bitsandbytes==0.37.2
 huggingface_hub==0.14.1
 numpy==1.24.3
 py7zr==0.20.5
