@@ -5,6 +5,7 @@ from warnings import warn
 
 from datasets import Dataset
 from huggingface_hub import login, logout
+from torch.cuda import empty_cache
 from tqdm import tqdm
 from transformers import BatchEncoding
 
@@ -112,6 +113,8 @@ def app(config: Dict[str, Any]):
         log['train']['cuda_memory_stats'] = get_memory_stats()
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
+        empty_cache()
+
         # Save our model to the hub
         if not mock_saving():
             try:
@@ -133,6 +136,7 @@ def app(config: Dict[str, Any]):
 
     # Switch to inference mode.
     model.eval()
+    model.config.use_cache = True  # reenable for inference
 
     # Run predictions.
     predictions, references = list(), list()
