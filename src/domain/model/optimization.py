@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from bitsandbytes.optim import AdamW8bit, Lion8bit
+from bitsandbytes.optim import AdamW8bit
 from lion_pytorch.lion_pytorch import Lion
 from peft import PeftModelForSeq2SeqLM
 from torch.optim import AdamW, Optimizer
