@@ -113,7 +113,7 @@ def app(config: Dict[str, Any]):
         log['train']['train_batch_size'] = trainer.args.train_batch_size
 
         # Save our model to the hub
-        if mock_saving():
+        if not mock_saving():
             try:
                 login(token=token)
                 trainer.model.push_to_hub(output_dir)
