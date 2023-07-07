@@ -19,7 +19,7 @@ from src.infrastructure.evaluate import load_rouge_metric
 from src.domain.model.evaluation import evaluate_peft_model
 from src.infrastructure.huggingface_hub import get_huggingface_hub_connection, upload_log, save_log
 from src.infrastructure.peft import load_peft_model
-from src.infrastructure.utilities import mock_saving, eval_only
+from src.infrastructure.utilities import mock_saving
 
 
 def app(config: Dict[str, Any]):
@@ -81,7 +81,7 @@ def app(config: Dict[str, Any]):
     token = getenv('HUGGINGFACE_TOKEN')
 
     # Either load a pre-finetuned model or finetune a model.
-    if eval_only():
+    if config['eval_only'] is not None and config['eval_only']:
         model = load_peft_model(model, output_dir)
     else:
         # Prepare our model for the LoRA int-8 training using peft.

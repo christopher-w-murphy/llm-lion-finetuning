@@ -16,7 +16,3 @@ def strtobool(val: str) -> bool:
 
 def mock_saving() -> bool:
     return getenv('MOCK_SAVING') is not None and strtobool(getenv('MOCK_SAVING'))
-
-
-def eval_only() -> bool:
-    return getenv('EVAL_ONLY') is not None and strtobool(getenv('EVAL_ONLY'))

@@ -10,6 +10,7 @@ class Parser(Tap):
     model_size: str = "Small"           # Fine-tune an 80M param model, or fine-tune an 11B param model.
     n_epochs: int = 5                   # Adjust the number of fine-tuning training epochs.
     limit_samples: bool = False         # If selected, use only the first {limited_samples_count} samples from and test dataset. Useful for testing the pipeline.
+    eval_only: bool = False             # If selected, evaluate a pre-finetuned model. Otherwise, finetine a model and then evaluate it.
 
     def process_args(self):
         if self.optim_name not in optim_names:
@@ -21,7 +22,7 @@ class Parser(Tap):
 def main():
     load_dotenv()
     args = Parser().parse_args()
-    app({"optim_name": args.optim_name, "model_size": args.model_size, "n_epochs": args.n_epochs, "limit_samples": args.limit_samples})
+    app({"optim_name": args.optim_name, "model_size": args.model_size, "n_epochs": args.n_epochs, "limit_samples": args.limit_samples, "eval_only": args.eval_only})
 
 
 if __name__ == '__main__':
