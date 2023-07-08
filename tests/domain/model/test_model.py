@@ -10,4 +10,4 @@ def test_get_training_arguments():
     output_dir = 'foo/bar'
     n_epochs = 42
     result = get_training_arguments(output_dir, n_epochs)
-    assert result.auto_find_batch_size
+    assert not result.auto_find_batch_size
