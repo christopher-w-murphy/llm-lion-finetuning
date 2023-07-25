@@ -13,7 +13,7 @@ python_version: 3.9
 
 # LLM Lion Fine-Tuning
 
-This is the code associated with my blog post investigating the impact of the choice of optimizer when fine-tuning a Large Language Model.
+This is the code associated with my [blog post](https://open.substack.com/pub/murphtron5000/p/optimizers-for-fine-tuning-large?r=f6yaw&utm_campaign=post&utm_medium=web) investigating the impact of the choice of optimizer when fine-tuning a Large Language Model.
 See the post for details about the nature of the experiment and the results I found.
 
 My [results](https://huggingface.co/datasets/chriswmurphy/llm-lion-finetuning) are available as a dataset on Hugging Face. 
@@ -63,3 +63,4 @@ python script.py --optim_name "Lion 8-bit" --model_size XXL
 
 To run the CI/CD pipeline to deploy the code to Hugging Face Spaces you'll need to have your HUGGINGFACE_TOKEN also stored as a secret on GitHub.
 You'll also need your SPACE_AUTHOR_NAME set as a variable on GitHub.
+I used the UI on GitHub and Hugging Face Spaces to set the env vars there, and I created a .env file on AWS.
